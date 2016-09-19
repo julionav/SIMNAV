@@ -1,12 +1,12 @@
-# SIMNAV2
-Re-Do of SIMNAV using more advanced programming techniques
-
-SIMNAV is a open-source simulator for multicomponent distillation towers.
-
-SIMNAV2 is a Re-Do of SIMNAV using desing patters, SQLalchemy, and others tools to improve the code
+# SIMNAV
+SIMNAV is a open-source simulator for multicomponent distillation towers. Developent with the MVC
+desing patter, SQLalchemy at the moment. Planning to implement in the future numpy an scipy for the mathematical models.
 
 Done:
 - Dynamic reflect module for an existing DB.
 
 TODO:
 ALOT.
+
+Currently the source code of SIMNAV is written in Spanish. It will be translated in the future to
+English
