@@ -17,8 +17,10 @@ class ModeloEquilibrioIdeal:
     Modelo de equilibrio vapor-liquido ideal
     """
 
-    def __init__(self, p_antoine, cp_liquido, cp_polinomial, cp_hiperbolico,
-                 calor_vap, prop_criticas):
+    def __init__(
+                self, p_antoine, cp_liquido, cp_polinomial, cp_hiperbolico,
+                calor_vap, prop_criticas
+                 ):
         """
         Se inicia la clase con los parametros constantes de las distintas
         ec a utilizar
