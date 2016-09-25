@@ -1,5 +1,5 @@
 # SIMNAV
-SIMNAV is a open-source simulator for multicomponent distillation towers. Developent with the MVC
+SIMNAV is a open-source simulator for multicomponent distillation towers. Developed with the MVC
 desing patter, SQLalchemy at the moment. Planning to implement in the future numpy an scipy for the mathematical models.
 
 Done:

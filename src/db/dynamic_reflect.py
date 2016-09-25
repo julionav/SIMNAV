@@ -23,11 +23,11 @@ class DbReflection:
         return session
 
     def engine(self):
-
         engine = create_engine(self.connection_string, echo=False)
         return engine
 
     def reflect_db(self):
+        "Reflects the db"
         engine = self.engine()
 
         # Reflect the database to allow for declarative and using core
@@ -37,6 +37,7 @@ class DbReflection:
         return Base
 
     def dynamic_reflect(self):
+        "It return all the tables objects in the Db as a dict"
         tables = {}
         Base = self.reflect_db()
 
