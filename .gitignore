@@ -64,6 +64,7 @@ instance/
 docs/_build/
 
 # PyBuilder
+
 target/
 
 # IPython Notebook
@@ -91,3 +92,7 @@ ENV/
 # Sublime project settings
 *.sublime-project
 *.sublime-workspace
+
+# pycharm
+.idea/
+*.xml

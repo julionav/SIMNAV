@@ -7,14 +7,14 @@ Created on 18/09/2016
 @author: Julio Navarro
 '''
 
-from db.dynamic_reflect import DbReflection
+from .propiedades.dynamic_reflect import DbReflection
 
 
 class ParameterHandler:
-    '''
-    Class encargada de manejar los parametros de la base de datos de simnav
-    '''
-    db = DbReflection('sqlite:///db/simnavDB.sqlite')
+    """
+    Clase encargada de manejar los parametros de la base de datos de simnav
+    """
+    db = DbReflection('sqlite:///propiedades.sqlite')
     tables = db.dynamic_reflect()
     session = db.session()
 
