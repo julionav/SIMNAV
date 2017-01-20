@@ -1,2 +1,3 @@
 from .mezclas import *
-from .ideal import *
+from . import ideal
+from .propiedades import *
