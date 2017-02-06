@@ -1,25 +1,23 @@
-from simnav.corrientes import Compuesto, CorrienteMateria
-from simnav.termodinamica.paquetes import PaqueteIdeal
-from simnav.opus.destilacion import DestilacionSemiRigurosa
+"""Cliente de simnav. Encargado de proveer inicializar los modelos y las vistas"""
+
+import sys
+
+from PyQt5 import QtWidgets
+
+from simnav import Simulacion
+from simnav.gui.vistas import VistaPrincipal
 
 
-compuestos = (Compuesto('benzene'),
-              Compuesto('toluene'))
-paquete_termodinamico = PaqueteIdeal(compuestos)
-composicion = [0.45, 0.55]
-corriente = CorrienteMateria(flujo=100,
-                             temperatura=54.4+273.15,
-                             paquete_termodinamico=paquete_termodinamico,
-                             compuestos=compuestos,
-                             composicion=composicion)
-entradas = [
-    (corriente, 5)
-]
+class Aplicacion(QtWidgets.QApplication):
+    def __init__(self, sys_argv):
+        """Inicializa la simulacion y las vistas. Pasando la referencia de la
+        simulacion a la vista principal"""
+        super().__init__(sys_argv)
+        self.simulacion = Simulacion()
+        self.main_view = VistaPrincipal(self.simulacion)
+        self.main_view.show()
 
-destilador = DestilacionSemiRigurosa(numero_platos=10,
-                                     destilado=55,
-                                     reflujo=1.3,
-                                     corrientes_entrada=entradas,
-                                     corrientes_salida='foo',
-                                     paquete_termodinamico=paquete_termodinamico)
-destilador.calcular()
+
+if __name__ == '__main__':
+    app = Aplicacion(sys.argv)
+    sys.exit(app.exec_())

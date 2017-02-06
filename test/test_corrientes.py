@@ -1,8 +1,7 @@
 from CoolProp import CoolProp as CP
 
-from simnav.corrientes.materia import CorrienteMateria, Compuesto
+from simnav.corrientes import CorrienteMateria, Compuesto
 from simnav.termodinamica.paquetes import PaqueteIdeal
-
 from .utilidades import parse_components, error_relativo
 
 

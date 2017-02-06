@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+__pycache__.py
 
 # C extensions
 *.so
@@ -96,3 +97,7 @@ ENV/
 # pycharm
 .idea/
 *.xml
+
+
+# qtdesigner
+*.ui

@@ -1,21 +1,17 @@
-from .modelos import (Componentes,
-                      CapacidadesCalorificasGasPolinomial,
-                      CapacidadesCalorificasLiquido,
-                      ConstantesCriticasFactoresAcentricos,
-                      CpGasHiperbolico,
-                      CalorVaporizacionLiquidos,
-                      Antoine,
-                      session,
-                      )
-
 """
 Classes, funciones y utilidades para el manejo de propiedades
 """
-# TODO: Haz este modulo pep8 compliant
 
-
-class CompuestoNoExiste(Exception):
-    pass
+from simnav.errores import CompuestoNoEncontrado
+from .db import (Componentes,
+                 CapacidadesCalorificasGasPolinomial,
+                 CapacidadesCalorificasLiquido,
+                 ConstantesCriticasFactoresAcentricos,
+                 CpGasHiperbolico,
+                 CalorVaporizacionLiquidos,
+                 Antoine,
+                 session,
+                 )
 
 
 class GestorParametros:
@@ -35,13 +31,16 @@ class GestorParametros:
 
     def __init__(self, compuestos):
         """El manejador se inicializa con los componentes a simular"""
-        self.compuestos = [compuesto.nombre.upper() for compuesto in compuestos]
-
+        self.compuestos = compuestos
         self.compuestos_id = []
-        for compuesto in self.compuestos:
+
+        # Los componentes en la base de datos estan en ingles
+        compuestos_upper = [compuesto.upper() for compuesto in self.compuestos]
+
+        for compuesto in compuestos_upper:
             compuesto_id = session.query(Componentes.id).filter_by(NAME=compuesto).scalar()
             if compuesto_id is None:
-                raise CompuestoNoExiste(
+                raise CompuestoNoEncontrado(
                     f'El compuesto {compuesto} no existe en nuestra base de datos')
             self.compuestos_id.append(compuesto_id)
 
@@ -65,13 +64,13 @@ class GestorParametros:
         return self._solicitar_datos(Antoine)
 
     def cp_gas_polinomial(self):
-        """Retorna los parametros a utilizar en la ecuación para calculo de capacidades calorificas de gas en forma
-        polinomial encontrada en el Perry"""
+        """Retorna los parametros a utilizar en la ecuación para calculo de capacidades
+        calorificas de gas en forma polinomial encontrada en el Perry"""
         return self._solicitar_datos(CapacidadesCalorificasGasPolinomial)
 
     def cp_liquido(self):
-        """Retorna los parametros a utilizar en la ecuación para calculo de capacidades calorificas de liquido
-        encontrada en el Perry"""
+        """Retorna los parametros a utilizar en la ecuación para calculo de capacidades
+        calorificas de liquido encontrada en el Perry"""
         return self._solicitar_datos(CapacidadesCalorificasLiquido)
 
     def constantes_criticas(self):
@@ -79,13 +78,13 @@ class GestorParametros:
         return self._solicitar_datos(ConstantesCriticasFactoresAcentricos)
 
     def cp_gas_hiperbolico(self):
-        """Retorna los parametros a utilizar en la ecuación para calculo de capacidades calorificas de gas en forma
-        hiperbolica encontrada en el Perry"""
+        """Retorna los parametros a utilizar en la ecuación para calculo de capacidades
+        calorificas de gas en forma hiperbolica encontrada en el Perry"""
         return self._solicitar_datos(CpGasHiperbolico)
 
     def calor_vaporizacion(self):
-        """Retorna los parametros a utilizar en la ecuación para el calculo de calor de vaporización de liquidos
-         encontrada en el Perry"""
+        """Retorna los parametros a utilizar en la ecuación para el calculo de calor de
+        vaporización de liquidos encontrada en el Perry"""
         return self._solicitar_datos(CalorVaporizacionLiquidos)
 
     def temperaturas_criticas(self):

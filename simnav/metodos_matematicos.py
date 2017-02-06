@@ -4,6 +4,7 @@ import numpy as np
 
 
 def metodo_tomas(a, b, c, d):
+    """Metodo de tomas utilizado para resolver matrices tridiagonales"""
     N = a.size
     x = np.zeros(N)
     # se modifican los coeficientes de la primera fila

@@ -13,7 +13,7 @@ class DestilacionSemiRigurosa:
     """
 
     def __init__(self, numero_platos, destilado, reflujo, corrientes_entrada,
-                 corrientes_salida, paquete_termodinamico, presion=101325):
+                 flujos_salida, paquete_termodinamico, presion=101325):
         """
 
         :param numero_platos: numero de platos de la torre
@@ -30,20 +30,18 @@ class DestilacionSemiRigurosa:
         self.reflujo = reflujo  # Relación de reflujo
         self.destilado = destilado  # Flujo de destilado de la torre
         self.corrientes_entrada = corrientes_entrada  # en la forma (corriente, plato)
-        self.corrientes_salida = corrientes_salida  # en la forma (corriente, plato)
+        self.flujos_salida = flujos_salida  # en la forma (flujo, plato)
         # TODO: Solucionar el asunto de los componentes
-        self.compuestos = compuestos_corriente(
-            *[corriente_entrada[0] for corriente_entrada in corrientes_entrada])
-        self.numero_compuestos = len(self.compuestos)
         self.presion = presion
         self.propiedades = paquete_termodinamico
 
-    def calcular(self, destilador_parcial=False):
+    def calcular(self):
         """
         Determina las composciciones, flujos y temperaturas plato a plato en la torre
         """
         # Se crean referencias de atajo para los parametros de la torre
-        N, R, D, NC = self.numero_platos, self.reflujo, self.destilado, self.numero_compuestos
+        N, R, D = self.numero_platos, self.reflujo, self.destilado
+        NC = len(self.propiedades.compuestos)
 
         # Presion de cada plato. Considerando que no hay caida de presion.
         # TODO: Considerar caida de presion

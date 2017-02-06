@@ -1,3 +1,2 @@
-from .mezclas import *
 from . import ideal
-from .propiedades import *
+from .paquetes import PaqueteIdeal

@@ -1,2 +1,2 @@
-from .modelos import *
+from .db import *
 from .propiedades import *

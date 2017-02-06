@@ -1,7 +1,6 @@
 """Paquetes termodinamicos"""
 
-import logging
-from functools import partial, wraps
+from functools import partial
 
 import numpy as np
 from scipy.optimize import newton
@@ -9,78 +8,28 @@ from scipy.optimize import newton
 from simnav.termodinamica import ideal
 from simnav.datos import GestorParametros
 
-
-## TODO: Mover utilidades
-def soporte_scalar(func: object) -> object:
-    """Gives numpy support to a python function"""
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if any(isinstance(arg, (int, float, list, tuple)) for arg in args):
-            new_args = []
-            for arg in args:
-                if isinstance(arg, (list, tuple, int, float)):
-                    arg = np.atleast_2d(arg)
-                new_args.append(arg)
-            return func(*new_args, **kwargs)[0]
-
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-def sumar_filas(array):
-    """
-    Suma las filas de un array. Si el array es de 1 sola dimension suma todos los elementos
-    """
-    if array.ndim == 2:
-        return np.sum(array, axis=1)
-    else:
-        return np.sum(array)
-
-
-def soporte_numpy_2d(func):
-    """Da soporte para arrays 2d a funciones que utilizan arrays 1d o scalares"""
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        for arg in args:
-            if isinstance(arg, np.ndarray) and arg.ndim == 2:
-                results = np.empty(arg[:, 0].size)
-                break
-
-        else:
-            for value in kwargs.values():
-                if isinstance(value, np.ndarray) and value.ndim == 2:
-                    results = np.empty(value[:, 0].size)
-                    break
-            else:
-                return func(*args, **kwargs)
-
-        for i in range(results.size):
-            results[i] = func(
-                *[arg[i] if isinstance(arg, np.ndarray) else arg for arg in args],
-                **{key: value[i] for key, value in kwargs.items()})
-        return results
-
-    return wrapper
+from .utilidades import sumar_filas, soporte_numpy_2d, soporte_scalar
 
 
 class PaqueteIdeal:
     """Paquete termodinamico ideal"""
+
+    nombre = "Ideal"
+
     # Variables para guardar valores de propiedades constantes. Como lo es la entalpia de
     # vaporizacion a T de referencia
     _entalpias_vaporizacion = None
 
     def __init__(self, compuestos):
         """
-
+        Inicializa el paquete termodinamico con una referencia a los compuestos de la
+        simulación
         :param compuestos: Lista de compuestos
         """
         self.compuestos = compuestos
-        self.numero_compuestos = len(compuestos)
-        self.parametros = GestorParametros(compuestos)
-        self.logger = logging.getLogger(__name__)
+
+        self.numero_compuestos = len(self.compuestos)
+        self.parametros = GestorParametros(self.compuestos)
 
         # Temperatura de referencia (h=0, s=0 para liquido saturado a 1atm)
         self.temperaturas_ref = np.array(self.temperatura_saturacion(101325))
@@ -88,8 +37,15 @@ class PaqueteIdeal:
         # Funciones vectorizadas
         self.entalpia_cp = np.vectorize(ideal.entalpia_cp, excluded=['T1', 'ecuacion_cp'])
 
+
+    def actualizar(self):
+        """Actualiza la instancia del objeto con los nuevos compuestos.
+        Se usa cuando la lista de compuestos a sido modificada"""
+        self.__init__(self.compuestos)
+
     @soporte_scalar
     def presion_vapor(self, temperatura):
+        """Retorna la presion de vapor de cada compuesto para la temperatura dada"""
         presiones_vapor = np.zeros((temperatura.size, self.numero_compuestos))
         for indice, parametros in enumerate(self.parametros.antoine()):
             presiones_vapor[:, indice] = ideal.antoine(temperatura,
@@ -101,6 +57,7 @@ class PaqueteIdeal:
         return presiones_vapor
 
     def temperatura_saturacion(self, presion_saturacion):
+        """Retorna la temperatura de saturación para la presión dada"""
         temperatura_saturacion = np.zeros(self.numero_compuestos)
         for indice, parametros in enumerate(self.parametros.antoine()):
             ecuacion_presion_vapor = partial(ideal.antoine,
@@ -118,10 +75,14 @@ class PaqueteIdeal:
         return temperatura_saturacion
 
     def coeficiente_reparto(self, temperatura, presion):
+        """Retorna el coeficiente de reparto para cada compuesto a la temperatura y
+        presion dada"""
         return self.presion_vapor(temperatura) / presion
 
     @soporte_scalar
     def entalpia_liquido_puro(self, temperatura):
+        """Retorna la entalpia de liquido puro para la temperatura dada. Puede usarse
+        con un escalar de temperatura o un array de numpy"""
         entalpia_liquido = np.zeros((temperatura.size, self.numero_compuestos))
         temperaturas_critica = self.parametros.temperaturas_criticas()
 
