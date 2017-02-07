@@ -27,6 +27,7 @@ class VistaPrincipal(QtWidgets.QMainWindow):
 
         # Ventanas extra
         self.config = None
+        self.conf_destilacion = None
 
         
 
@@ -51,6 +52,7 @@ class VistaPrincipal(QtWidgets.QMainWindow):
         self.ui.actionCompuestos.triggered.connect(partial(self.abrir_configuracion, 0))
         self.ui.actionPropiedades.triggered.connect(partial(self.abrir_configuracion, 1))
         self.ui.actionCorrientes.triggered.connect(partial(self.abrir_configuracion, 2))
+        self.ui.actionDestilacion.triggered.connect(self.abrir_conf_destilacion)
 
     def closeEvent(self, status):
         # Se sobreescribe esta funcion para que cierre todo el proceso al cerrar la ventana
@@ -58,6 +60,9 @@ class VistaPrincipal(QtWidgets.QMainWindow):
 
     def abrir_configuracion(self, tab):
         self.config = Configuracion(self.simulacion, tab)
+
+    def abrir_conf_destilacion(self):
+        self.conf_destilacion = ConfiguracionDestilacion(self.simulacion)
 
 
 class Configuracion(QtWidgets.QWidget):
@@ -274,6 +279,7 @@ class ModificaComposicion(QtWidgets.QWidget):
         yield from range(len(self.corriente.compuestos))
 
     def aceptar(self):
+        """Acepta la composicion introducida -- normalizandola en el proceso."""
         self.normalizar()
         for fila in self._range_table():
             fraccion = float(self.ui.tablaComposicion.item(fila, 1).text())
@@ -281,67 +287,77 @@ class ModificaComposicion(QtWidgets.QWidget):
         self.close()
 
     def normalizar(self):
+        """Normaliza la composicion introducida (La sumatoria de las fracciones igual a 1)"""
+        # Obteniendo la composicion
         composicion = []
         for fila in self._range_table():
             composicion.append(float(self.ui.tablaComposicion.item(fila, 1).text()))
+
+        # Verificando la suma
         sum_composicion = sum(composicion)
         if sum_composicion != 1:
             for fila in self._range_table():
+                # Se divide cada fraccion entre la sumatoria de ellas para normalizarla
                 fraccion = float(self.ui.tablaComposicion.item(fila, 1).text())
                 nueva_fraccion = str(round(fraccion/sum_composicion, 4))
                 self.ui.tablaComposicion.item(fila, 1).setText(nueva_fraccion)
         else:
             return
 
-    class ConfiguracionDestilacion(QtWidgets.QWidget):
+class ConfiguracionDestilacion(QtWidgets.QWidget):
+    #TODO: Cambiar titulo de ventana
 
-        def __init__(self, simulacion):
-            super().__init__()
-            self.simulacion = simulacion
+    def __init__(self, simulacion):
+        super().__init__()
+        self.simulacion = simulacion
 
-            self.build_ui()
+        self.build_ui()
+        self.show()
 
-        def build_ui(self):
-            """Construye la interfaz de usuario a partir de la clase generada por qtdesigner"""
-            ui = Ui_Destilacion()
-            ui.setupUi(self)
+    def build_ui(self):
+        """Construye la interfaz de usuario a partir de la clase generada por qtdesigner"""
+        self.ui = Ui_Destilacion()
+        self.ui.setupUi(self)
 
-            # Cargar simulacion
-            self._cargar_datos_torre()
-            self._cargar_corrientes()
-            self._cargar_salidas_laterales()
+        # Configuracion de la ui
+        self.ui.tabWidget.setCurrentIndex(0)
 
-        def _cargar_tipo_condensador(self, condensador):
-            """Carga el tipo de condensador actual a la interfaz"""
-            if condensador == "Parcial":
-                self.ui.tipoDeCondensadorComboBox.setCurrentIndex(0)
+        # Cargar simulacion
+        self._cargar_datos_torre()
+        self._cargar_corrientes()
+        self._cargar_salidas_laterales()
 
-            else:
-                self.ui.tipoDeCondensadorComboBox.setCurrentIndex(1)
+    def _cargar_tipo_condensador(self, condensador):
+        """Carga el tipo de condensador actual a la interfaz"""
+        if condensador == "Parcial":
+            self.ui.tipoDeCondensadorComboBox.setCurrentIndex(0)
 
-        def _cargar_corrientes(self):
-            """Carga las corrientes de alimentaciones del destilador"""
-            corrientes_entrada = self.simulacion.destilacion.corrientes_entrada
-            for fila, (corriente, plato) in enumerate(corrientes_entrada):
-                self.ui.tablaAlimentacion.setItem(fila, 0,
-                                                  QtWidgets.QTableWidgetItem(plato))
-                self.ui.tablaAlimentacion.setItem(fila, 1,
-                                                  QtWidgets.QTableWidgetItem(corriente.nombre))
+        else:
+            self.ui.tipoDeCondensadorComboBox.setCurrentIndex(1)
 
-        def _cargar_salidas_laterales(self):
-            """Carga las salidas laterales del simulador a la interfaz"""
-            salidas_laterales = self.simulacion.destilacion.salidas_laterales
-            for fila, (flujo, plato) in enumerate(salidas_laterales):
-                self.ui.tablaAlimentacion.setItem(fila, 0,
-                                                  QtWidgets.QTableWidgetItem(plato))
-                self.ui.tablaAlimentacion.setItem(fila, 1,
-                                                  QtWidgets.QTableWidgetItem(flujo))
+    def _cargar_corrientes(self):
+        """Carga las corrientes de alimentaciones del destilador"""
+        corrientes_entrada = self.simulacion.destilacion.corrientes_entrada
+        for fila, (corriente, plato) in enumerate(corrientes_entrada):
+            self.ui.tablaAlimentacion.setItem(fila, 0,
+                                              QtWidgets.QTableWidgetItem(plato))
+            self.ui.tablaAlimentacion.setItem(fila, 1,
+                                              QtWidgets.QTableWidgetItem(corriente.nombre))
 
-        def _cargar_datos_torre(self):
-            """Carga los parametros de la torre a la interfaz"""
-            # Datos torre
-            self.ui.numeroDePlatosLineEdit.text(self.simulacion.destilacion.numero_platos)
-            self.ui.presionLineEdit(self.simulacion.destilacion.presion)
-            self.ui.flujoDestiladoLineEdit(self.simulacion.destilacion.destilado)
-            self._cargar_tipo_condensador(self.simulacion.destilacion.condensador)
+    def _cargar_salidas_laterales(self):
+        """Carga las salidas laterales del simulador a la interfaz"""
+        salidas_laterales = self.simulacion.destilacion.salidas_laterales
+        for fila, (flujo, plato) in enumerate(salidas_laterales):
+            self.ui.tablaAlimentacion.setItem(fila, 0,
+                                              QtWidgets.QTableWidgetItem(plato))
+            self.ui.tablaAlimentacion.setItem(fila, 1,
+                                              QtWidgets.QTableWidgetItem(flujo))
+
+    def _cargar_datos_torre(self):
+        """Carga los parametros de la torre a la interfaz"""
+        # Datos torre
+        self.ui.numeroDePlatosLineEdit.setText(str(self.simulacion.destilacion.numero_platos))
+        self.ui.presionLineEdit.setText(str(self.simulacion.destilacion.presion))
+        self.ui.flujoDestiladoLineEdit.setText(str(self.simulacion.destilacion.destilado))
+        self._cargar_tipo_condensador(self.simulacion.destilacion.condensador)
 

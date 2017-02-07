@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'simnav/gui/vistas/diseños/designer/configuracion_destilacion.ui'
+# Form implementation generated from reading ui file '/home/julio/Desktop/SIMNAV/simnav/gui/base/ui/configuracion_destilacion.ui'
 #
 # Created by: PyQt5 UI code generator 5.7.1
 #
@@ -118,7 +118,7 @@ class Ui_Destilacion(object):
         self.verticalLayout_2.addWidget(self.pushButton, 0, QtCore.Qt.AlignRight)
 
         self.retranslateUi(Destilacion)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(Destilacion)
 
     def retranslateUi(self, Destilacion):
@@ -133,16 +133,16 @@ class Ui_Destilacion(object):
         self.tipoDeCondensadorComboBox.setItemText(1, _translate("Destilacion", "Total"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.torre), _translate("Destilacion", "Datos torre"))
         item = self.tablaAlimentacion.horizontalHeaderItem(0)
-        item.setText(_translate("Destilacion", "Corriente"))
-        item = self.tablaAlimentacion.horizontalHeaderItem(1)
         item.setText(_translate("Destilacion", "Plato"))
+        item = self.tablaAlimentacion.horizontalHeaderItem(1)
+        item.setText(_translate("Destilacion", "Corriente"))
         self.eliminarAlimentacion.setText(_translate("Destilacion", "Eliminar"))
         self.agregarAlimentacion.setText(_translate("Destilacion", "Agregar"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.alimentacion), _translate("Destilacion", "Alimentación"))
         item = self.tablaProductos.horizontalHeaderItem(0)
-        item.setText(_translate("Destilacion", "Flujo (kmol/h)"))
-        item = self.tablaProductos.horizontalHeaderItem(1)
         item.setText(_translate("Destilacion", "Plato"))
+        item = self.tablaProductos.horizontalHeaderItem(1)
+        item.setText(_translate("Destilacion", "Flujo (kmol/h)"))
         self.eliminarProducto.setText(_translate("Destilacion", "Eliminar"))
         self.agregarProducto.setText(_translate("Destilacion", "Agregar"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.salidas_laterales), _translate("Destilacion", "Salidas Laterales"))

@@ -2,7 +2,6 @@
 
 import numpy as np
 
-from simnav.corrientes.utilidades import compuestos_corriente
 from simnav.metodos_matematicos import metodo_tomas
 
 
@@ -12,8 +11,8 @@ class DestilacionSemiRigurosa:
     multicomponentes con un condensador parcial resuelto con una matriz tridiagonal
     """
 
-    def __init__(self, numero_platos, destilado, reflujo, corrientes_entrada,
-                 flujos_salida, paquete_termodinamico, presion=101325):
+    def __init__(self, numero_platos=10, destilado=50, reflujo=1.5, corrientes_entrada=[],
+                 salidas_laterales=[], paquete_termodinamico=None, presion=101325):
         """
 
         :param numero_platos: numero de platos de la torre
@@ -30,10 +29,10 @@ class DestilacionSemiRigurosa:
         self.reflujo = reflujo  # Relación de reflujo
         self.destilado = destilado  # Flujo de destilado de la torre
         self.corrientes_entrada = corrientes_entrada  # en la forma (corriente, plato)
-        self.flujos_salida = flujos_salida  # en la forma (flujo, plato)
-        # TODO: Solucionar el asunto de los componentes
+        self.salidas_laterales = salidas_laterales  # en la forma (flujo, plato)
         self.presion = presion
         self.propiedades = paquete_termodinamico
+        self.condensador = "Parcial"
 
     def calcular(self):
         """

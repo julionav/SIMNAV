@@ -3,7 +3,7 @@
 from simnav.corrientes import CorrienteMateria
 from simnav.termodinamica import PaqueteIdeal
 from simnav.datos.db import Componentes, session
-
+from simnav.opus.destilacion import DestilacionSemiRigurosa
 
 class Simulacion:
     """LLeva el control de alto nivel de la simulacion"""
@@ -12,7 +12,7 @@ class Simulacion:
         self.compuestos = []
         self.corrientes = []
         self.__paquete_propiedades = None
-        self.destilacion = None
+        self.destilacion = DestilacionSemiRigurosa()
 
     @property
     def paquete_propiedades(self):

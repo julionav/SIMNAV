@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'simnav/gui/vistas/diseños/designer/vista_principal.ui'
+# Form implementation generated from reading ui file '/home/julio/Desktop/SIMNAV/simnav/gui/base/ui/vista_principal.ui'
 #
 # Created by: PyQt5 UI code generator 5.7.1
 #
@@ -11,7 +11,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_VistaPrincipal(object):
     def setupUi(self, VistaPrincipal):
         VistaPrincipal.setObjectName("VistaPrincipal")
-        VistaPrincipal.resize(426, 615)
+        VistaPrincipal.resize(473, 615)
+        VistaPrincipal.setMinimumSize(QtCore.QSize(473, 615))
+        VistaPrincipal.setMaximumSize(QtCore.QSize(473, 615))
         self.centralwidget = QtWidgets.QWidget(VistaPrincipal)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.centralwidget)
@@ -50,7 +52,7 @@ class Ui_VistaPrincipal(object):
         self.horizontalLayout_2.addLayout(self.horizontalLayout)
         VistaPrincipal.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(VistaPrincipal)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 426, 25))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 473, 25))
         self.menubar.setObjectName("menubar")
         self.menuArchivo = QtWidgets.QMenu(self.menubar)
         self.menuArchivo.setObjectName("menuArchivo")
@@ -75,6 +77,8 @@ class Ui_VistaPrincipal(object):
         self.actionCerrar.setObjectName("actionCerrar")
         self.actionSalir = QtWidgets.QAction(VistaPrincipal)
         self.actionSalir.setObjectName("actionSalir")
+        self.actionDestilacion = QtWidgets.QAction(VistaPrincipal)
+        self.actionDestilacion.setObjectName("actionDestilacion")
         self.menuArchivo.addAction(self.actionAbrir)
         self.menuArchivo.addAction(self.actionCerrar)
         self.menuArchivo.addAction(self.actionSalir)
@@ -82,6 +86,7 @@ class Ui_VistaPrincipal(object):
         self.toolBar.addAction(self.actionCompuestos)
         self.toolBar.addAction(self.actionPropiedades)
         self.toolBar.addAction(self.actionCorrientes)
+        self.toolBar.addAction(self.actionDestilacion)
         self.toolBar.addAction(self.actionResultados)
 
         self.retranslateUi(VistaPrincipal)
@@ -100,4 +105,5 @@ class Ui_VistaPrincipal(object):
         self.actionAbrir.setText(_translate("VistaPrincipal", "Abrir"))
         self.actionCerrar.setText(_translate("VistaPrincipal", "Guardar"))
         self.actionSalir.setText(_translate("VistaPrincipal", "Salir"))
+        self.actionDestilacion.setText(_translate("VistaPrincipal", "Destilacion"))
 

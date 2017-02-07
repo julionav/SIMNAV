@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'simnav/gui/vistas/diseños/designer/composicion.ui'
+# Form implementation generated from reading ui file '/home/julio/Desktop/SIMNAV/simnav/gui/base/ui/composicion.ui'
 #
 # Created by: PyQt5 UI code generator 5.7.1
 #
