@@ -11,7 +11,6 @@ from simnav.gui.utils import StdOutToTextBox, LogToStdOut
 
 # TODO: REMUEVE TODOS LOS DRAG's
 class VistaPrincipal(QtWidgets.QMainWindow):
-
     def __init__(self, simulacion):
         super().__init__()
         self.simulacion = simulacion
@@ -29,21 +28,18 @@ class VistaPrincipal(QtWidgets.QMainWindow):
         self.config = None
         self.conf_destilacion = None
 
-        
-
     def build_ui(self):
         """Construye la interfaz de usuario a partir de la clase generada por qtdesigner"""
         self.ui = Ui_VistaPrincipal()
         self.ui.setupUi(self)
 
-        #Configuracion extra
+        # Configuracion extra
         self.ui.textBrowser.readOnly = True
 
         # Carpeta imagenes para buscar las imagenes
         imagen_torre = Path(__file__).parent / 'imagenes' / 'torre_destilacion.svg'
         self.ui.dibujoTorre.setPixmap(
             QtGui.QPixmap(str(imagen_torre)))
-        
 
         # Redireccionando la salida de texto estandar al text browser
         sys.stdout = StdOutToTextBox(self.ui.textBrowser)
@@ -271,7 +267,7 @@ class ModificaComposicion(QtWidgets.QWidget):
             self.ui.tablaComposicion.setItem(fila, 1,
                                              QtWidgets.QTableWidgetItem(str(fraccion)))
 
-        # Conectando señales
+            # Conectando señales
             self.ui.aceptar.clicked.connect(self.aceptar)
             self.ui.normalizar.clicked.connect(self.normalizar)
 
@@ -299,13 +295,14 @@ class ModificaComposicion(QtWidgets.QWidget):
             for fila in self._range_table():
                 # Se divide cada fraccion entre la sumatoria de ellas para normalizarla
                 fraccion = float(self.ui.tablaComposicion.item(fila, 1).text())
-                nueva_fraccion = str(round(fraccion/sum_composicion, 4))
+                nueva_fraccion = str(round(fraccion / sum_composicion, 4))
                 self.ui.tablaComposicion.item(fila, 1).setText(nueva_fraccion)
         else:
             return
 
+
 class ConfiguracionDestilacion(QtWidgets.QWidget):
-    #TODO: Cambiar titulo de ventana
+    # TODO: Cambiar titulo de ventana
 
     def __init__(self, simulacion):
         super().__init__()
@@ -313,6 +310,10 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
 
         self.build_ui()
         self.show()
+
+        # Contadores
+        # Lleva la posicion que debe tener la prox alimentacion agregada
+        self._fila_prox_alim = 0
 
     def build_ui(self):
         """Construye la interfaz de usuario a partir de la clase generada por qtdesigner"""
@@ -322,10 +323,17 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
         # Configuracion de la ui
         self.ui.tabWidget.setCurrentIndex(0)
 
+        # La tabla de alimentaciones tiene un tamaño maximo igual a la cantidad de corrientes
+        # en la simulación
+        self.ui.tablaAlimentacion.setRowCount(len(self.simulacion.corrientes))
+
         # Cargar simulacion
         self._cargar_datos_torre()
         self._cargar_corrientes()
         self._cargar_salidas_laterales()
+
+        # Conectando señales
+        self.ui.agregarAlimentacion.clicked.connect(self.agregar_alimentacion)
 
     def _cargar_tipo_condensador(self, condensador):
         """Carga el tipo de condensador actual a la interfaz"""
@@ -355,9 +363,23 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
 
     def _cargar_datos_torre(self):
         """Carga los parametros de la torre a la interfaz"""
-        # Datos torre
         self.ui.numeroDePlatosLineEdit.setText(str(self.simulacion.destilacion.numero_platos))
         self.ui.presionLineEdit.setText(str(self.simulacion.destilacion.presion))
         self.ui.flujoDestiladoLineEdit.setText(str(self.simulacion.destilacion.destilado))
         self._cargar_tipo_condensador(self.simulacion.destilacion.condensador)
 
+    def agregar_alimentacion(self):
+        """Agrega un item a la tabla de alimentaciones que contiene un comboBox para
+        seleccionar las corrientes disponibles en la simulacion"""
+        # Alimentaciones disponibles
+        # TODO: Una corriente conectada a una alimentación no puede volver a conectarse
+        c_box_alim = QtWidgets.QComboBox()
+        c_box_alim.addItems([corriente.nombre for corriente in self.simulacion.corrientes])
+
+        # Platos disponibles
+        c_box_platos = QtWidgets.QComboBox()
+        c_box_platos.addItems([str(plato) for plato
+                               in range(self.simulacion.destilacion.numero_platos)])
+
+        self.ui.tablaAlimentacion.setCellWidget(self._fila_prox_alim, 0, c_box_platos)
+        self.ui.tablaAlimentacion.setCellWidget(self._fila_prox_alim, 1, c_box_alim)
