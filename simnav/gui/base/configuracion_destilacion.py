@@ -113,9 +113,9 @@ class Ui_Destilacion(object):
         self.tabWidget.addTab(self.salidas_laterales, "")
         self.verticalLayout.addWidget(self.tabWidget)
         self.verticalLayout_2.addLayout(self.verticalLayout)
-        self.pushButton = QtWidgets.QPushButton(Destilacion)
-        self.pushButton.setObjectName("pushButton")
-        self.verticalLayout_2.addWidget(self.pushButton, 0, QtCore.Qt.AlignRight)
+        self.aceptar = QtWidgets.QPushButton(Destilacion)
+        self.aceptar.setObjectName("pushButton")
+        self.verticalLayout_2.addWidget(self.aceptar, 0, QtCore.Qt.AlignRight)
 
         self.retranslateUi(Destilacion)
         self.tabWidget.setCurrentIndex(1)
@@ -146,5 +146,5 @@ class Ui_Destilacion(object):
         self.eliminarProducto.setText(_translate("Destilacion", "Eliminar"))
         self.agregarProducto.setText(_translate("Destilacion", "Agregar"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.salidas_laterales), _translate("Destilacion", "Salidas Laterales"))
-        self.pushButton.setText(_translate("Destilacion", "Aceptar"))
+        self.aceptar.setText(_translate("Destilacion", "Aceptar"))
 

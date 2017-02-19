@@ -11,14 +11,14 @@ class DestilacionSemiRigurosa:
     multicomponentes con un condensador parcial resuelto con una matriz tridiagonal
     """
 
-    def __init__(self, numero_platos=10, destilado=50, reflujo=1.5, corrientes_entrada=[],
+    def __init__(self, numero_platos=10, destilado=50, reflujo=1.5, alimentaciones=[],
                  salidas_laterales=[], paquete_termodinamico=None, presion=101325):
         """
 
         :param numero_platos: numero de platos de la torre
         :param destilado: flujo de destilado de la torre (kmol/h)
         :param reflujo: relacion de reflujo de la torre
-        :param corrientes_entrada: lista de diccionarios con la informacion de las corrientes
+        :param alimentaciones: lista de diccionarios con la informacion de las corrientes
         de entrada a la columna
         :param corrientes_salida: lista de diccionarios de la infomacion de las corrientes de
         salida de la torre
@@ -28,7 +28,7 @@ class DestilacionSemiRigurosa:
         self.numero_platos = numero_platos  # Numero de platos de la torre
         self.reflujo = reflujo  # Relación de reflujo
         self.destilado = destilado  # Flujo de destilado de la torre
-        self.corrientes_entrada = corrientes_entrada  # en la forma (corriente, plato)
+        self.alimentaciones = alimentaciones  # en la forma (corriente, plato)
         self.salidas_laterales = salidas_laterales  # en la forma (flujo, plato)
         self.presion = presion
         self.propiedades = paquete_termodinamico
@@ -58,14 +58,14 @@ class DestilacionSemiRigurosa:
 
         # Se toman los parametros necesarios de las corrientes de entrada
 
-        for corriente, plato in self.corrientes_entrada:
+        for plato, corriente in self.alimentaciones:
             indice = plato - 1  # Los inidices de los array comienzan en 0. Los platos en 1
             F[indice] = corriente.flujo
             hF[indice] = corriente.entalpia_especifica
             zF[indice] = corriente.composicion
 
         # Valores iniciales de calculo
-        if destilador_parcial:
+        if self.condensador == 'Parcial':
             V[0] = D  # El flujo de vapor de salida por el tope (etapa 0) es igual al destilado
             V[1] = D * (R + 1)  # Flujo de vapor
             print(V[1])

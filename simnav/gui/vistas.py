@@ -315,6 +315,12 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
         # Lleva la posicion que debe tener la prox alimentacion agregada
         self._fila_prox_alim = 0
 
+        # Cantidad maxima me corrientes
+        self._alimentaciones_maximas = len(self.simulacion.corrientes)
+
+        # Cantidad maxima de salidas laterales igual a la cantidad de platos menos el tope y el fondo (2)
+        self._salidas_laterales_maximas = self.simulacion.destilacion.numero_platos - 2
+
     def build_ui(self):
         """Construye la interfaz de usuario a partir de la clase generada por qtdesigner"""
         self.ui = Ui_Destilacion()
@@ -323,17 +329,15 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
         # Configuracion de la ui
         self.ui.tabWidget.setCurrentIndex(0)
 
-        # La tabla de alimentaciones tiene un tamaño maximo igual a la cantidad de corrientes
-        # en la simulación
-        self.ui.tablaAlimentacion.setRowCount(len(self.simulacion.corrientes))
-
         # Cargar simulacion
         self._cargar_datos_torre()
-        self._cargar_corrientes()
+        self._cargar_alimentaciones()
         self._cargar_salidas_laterales()
 
         # Conectando señales
         self.ui.agregarAlimentacion.clicked.connect(self.agregar_alimentacion)
+        self.ui.agregarProducto.clicked.connect(self.agregar_salida_lateral)
+        self.ui.aceptar.clicked.connect(self.aceptar)
 
     def _cargar_tipo_condensador(self, condensador):
         """Carga el tipo de condensador actual a la interfaz"""
@@ -343,10 +347,9 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
         else:
             self.ui.tipoDeCondensadorComboBox.setCurrentIndex(1)
 
-    def _cargar_corrientes(self):
+    def _cargar_alimentaciones(self):
         """Carga las corrientes de alimentaciones del destilador"""
-        corrientes_entrada = self.simulacion.destilacion.corrientes_entrada
-        for fila, (corriente, plato) in enumerate(corrientes_entrada):
+        for fila, (corriente, plato) in enumerate(self.simulacion.destilacion.alimentaciones):
             self.ui.tablaAlimentacion.setItem(fila, 0,
                                               QtWidgets.QTableWidgetItem(plato))
             self.ui.tablaAlimentacion.setItem(fila, 1,
@@ -368,18 +371,125 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
         self.ui.flujoDestiladoLineEdit.setText(str(self.simulacion.destilacion.destilado))
         self._cargar_tipo_condensador(self.simulacion.destilacion.condensador)
 
+    def _agrandar_tabla(self, tabla, maximas_filas):
+        """Agrega una fila a la tabla provista si el valor no excede el maximo de filas
+        Retorna las filas actuales"""
+        filas_actuales = tabla.rowCount()
+        if filas_actuales < maximas_filas:
+            tabla.setRowCount(filas_actuales + 1)
+        return filas_actuales + 1
+
+    def _cbox_platos(self):
+        cbox = QtWidgets.QComboBox()
+        numero_platos = self.simulacion.destilacion.numero_platos
+
+        # Se limita los platos disponibles a todos menos el tope y fondo.
+        cbox.addItems([str(plato) for plato in range(numero_platos) if plato])
+        return cbox
+
     def agregar_alimentacion(self):
         """Agrega un item a la tabla de alimentaciones que contiene un comboBox para
         seleccionar las corrientes disponibles en la simulacion"""
+
+        # Agrandando la cantidad de filas de la torre si esta no excede la cantidad de corrientes disponibles.
+        filas_tabla = self._agrandar_tabla(self.ui.tablaAlimentacion, self._alimentaciones_maximas)
+
         # Alimentaciones disponibles
         # TODO: Una corriente conectada a una alimentación no puede volver a conectarse
-        c_box_alim = QtWidgets.QComboBox()
-        c_box_alim.addItems([corriente.nombre for corriente in self.simulacion.corrientes])
+        cbox_alim = QtWidgets.QComboBox()
+        cbox_alim.addItems([corriente.nombre for corriente in self.simulacion.corrientes])
 
-        # Platos disponibles
-        c_box_platos = QtWidgets.QComboBox()
-        c_box_platos.addItems([str(plato) for plato
-                               in range(self.simulacion.destilacion.numero_platos)])
+        # Agregando las widgets a la tabla
+        ultima_fila = filas_tabla - 1
+        self.ui.tablaAlimentacion.setCellWidget(ultima_fila, 0, self._cbox_platos())
+        self.ui.tablaAlimentacion.setCellWidget(ultima_fila, 1, cbox_alim)
 
-        self.ui.tablaAlimentacion.setCellWidget(self._fila_prox_alim, 0, c_box_platos)
-        self.ui.tablaAlimentacion.setCellWidget(self._fila_prox_alim, 1, c_box_alim)
+    def alimentaciones(self):
+        """Revisa que las alimentaciones introducidas sean diferentes entre si
+        Si no hay corrientes o platos repetidos se retorna una lista [plato, corriente]"""
+
+        corrientes = set()
+        platos = set()
+        alimentacions = []  # Lista de alimentaciones y sus platos
+
+        for row in range(self.ui.tablaAlimentacion.rowCount()):
+            corriente = self.ui.tablaAlimentacion.cellWdiget(row, 1).currentIndex()
+            plato = self.ui.tablaAlimentacion.cellWdiget(row, 0).currentIndex()
+
+            if corriente not in corrientes and plato not in platos:
+                corrientes.add(corriente)
+                platos.add(plato)
+                alimentacions.append([plato, corriente])
+
+            else:
+                return False
+        return True
+
+    def agregar_salida_lateral(self):
+        """Agrega una salida lateral a la tabla de salidas laterales"""
+        # Agrandando tabla
+        filas_tabla = self._agrandar_tabla(self.ui.tablaProductos, self._salidas_laterales_maximas)
+
+        ultima_fila = filas_tabla - 1
+        self.ui.tablaProductos.setCellWidget(ultima_fila, 0, self._cbox_platos())
+
+    def salidas_laterales(self):
+        """Revisa que todos los platos para las salidas laterales sean distintos entre si"""
+
+        platos = set()
+        salidas = []
+        for row in range(self.ui.tablaProductos.rowCount()):
+            plato = self.ui.tablaProductos.cellWdiget(row, 0).currentIndex()
+            try:
+                flujo = float(self.ui.tablaProductos.item(row, 0).text())
+            except ValueError:
+                print(f'El flujo del plato asignado al plato {plato} no es un flotante')
+
+            if plato not in platos:
+                platos.add(plato)
+                salidas.append([plato, flujo])
+            else:
+                return False
+
+        return salidas
+
+    def datos_torre(self):
+        """Revisa los datos de la torre y los retorna si cumplen """
+        destilado = self.ui.flujoDestiladoLineEdit.text()
+        numero_platos = self.ui.numeroDePlatosLineEdit.text()
+        presion = self.ui.presionLineEdit.text()
+        condensador = self.ui.tipoDeCondensadorComboBox.currentText()
+
+        try:
+            destilado = float(destilado)
+            presion = float(presion)
+            numero_platos = int(numero_platos)
+
+        except ValueError:
+            print("Ocurrio un error validando los datos de la torre. Verifique que los datos suministrados")
+            return False
+        else:
+            return destilado, presion, numero_platos, condensador
+
+    def aceptar(self):
+        """Acepta los datos suministrados y los usa para la simulación"""
+        datos_torre = self.datos_torre()
+        salidas_laterales = self.salidas_laterales()
+        alimentaciones = self.alimentaciones()
+
+        if not (datos_torre and salidas_laterales and alimentaciones):
+            print("Ocurrio un problema validando la configuración de la torre")
+            return False
+
+        destilado, presion, numero_platos, condensador = datos_torre
+
+        # Se actualizan los datos de la simulación
+        destilacion = self.simulacion.destilacion
+
+        destilacion.numero_platos = numero_platos
+        destilacion.presion = presion
+        destilacion.destilado = destilado
+        destilacion.alimentaciones = alimentaciones
+        destilacion.salidas_laterales = salidas_laterales
+        destilacion.condensador = condensador
+
