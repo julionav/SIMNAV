@@ -20,23 +20,31 @@ class PaqueteIdeal:
     # vaporizacion a T de referencia
     _entalpias_vaporizacion = None
 
-    def __init__(self, compuestos):
-        """
-        Inicializa el paquete termodinamico con una referencia a los compuestos de la
-        simulación
-        :param compuestos: Lista de compuestos
-        """
-        self.compuestos = compuestos
+
+    numero_compuestos = 0
+    parametros = None  # Gestor de parametros
+    temperaturas_ref = None # Array de temperaturas de referencia
+
+    if __name__ == '__main__':
+        def __init__(self, compuestos):
+            """
+            Inicializa el paquete termodinamico con una referencia a los compuestos de la
+            simulación
+            :param compuestos: Lista de compuestos
+            """
+            self.compuestos = compuestos
+
+            # Funciones vectorizadas
+            self.entalpia_cp = np.vectorize(ideal.entalpia_cp, excluded=['T1', 'ecuacion_cp'])
+
+    def iniciar(self):
+        """Metodo a ser llamado al iniciar la simulacion"""
 
         self.numero_compuestos = len(self.compuestos)
         self.parametros = GestorParametros(self.compuestos)
 
         # Temperatura de referencia (h=0, s=0 para liquido saturado a 1atm)
         self.temperaturas_ref = np.array(self.temperatura_saturacion(101325))
-
-        # Funciones vectorizadas
-        self.entalpia_cp = np.vectorize(ideal.entalpia_cp, excluded=['T1', 'ecuacion_cp'])
-
 
     def actualizar(self):
         """Actualiza la instancia del objeto con los nuevos compuestos.
@@ -377,4 +385,3 @@ class PaqueteIdeal:
 
         if temperatura_burbuja < temperatura < temperatura_rocio:
             return estado[2]
-
