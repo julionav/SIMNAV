@@ -23,19 +23,17 @@ class PaqueteIdeal:
 
     numero_compuestos = 0
     parametros = None  # Gestor de parametros
-    temperaturas_ref = None # Array de temperaturas de referencia
+    temperaturas_ref = None  # Array de temperaturas de referencia
 
-    if __name__ == '__main__':
-        def __init__(self, compuestos):
-            """
-            Inicializa el paquete termodinamico con una referencia a los compuestos de la
-            simulación
-            :param compuestos: Lista de compuestos
-            """
-            self.compuestos = compuestos
-
-            # Funciones vectorizadas
-            self.entalpia_cp = np.vectorize(ideal.entalpia_cp, excluded=['T1', 'ecuacion_cp'])
+    def __init__(self, compuestos):
+        """
+        Inicializa el paquete termodinamico con una referencia a los compuestos de la
+        simulación
+        :param compuestos: Lista de compuestos
+        """
+        self.compuestos = compuestos
+        # Funciones vectorizadas
+        self.entalpia_cp = np.vectorize(ideal.entalpia_cp, excluded=['T1', 'ecuacion_cp'])
 
     def iniciar(self):
         """Metodo a ser llamado al iniciar la simulacion"""

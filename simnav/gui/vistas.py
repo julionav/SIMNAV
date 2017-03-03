@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
-from simnav.gui.base import Ui_VistaPrincipal, Ui_Configuracion, Ui_Composicion, Ui_Destilacion
+from simnav.gui.base import Ui_VistaPrincipal, Ui_Configuracion, Ui_Composicion, Ui_Destilacion, Ui_Corrientes
 from simnav.gui.utils import StdOutToTextBox, LogToStdOut
 
 
@@ -64,9 +64,6 @@ class VistaPrincipal(QtWidgets.QMainWindow):
 class Configuracion(QtWidgets.QWidget):
     """Ventana de configuracion de simnav"""
 
-    # Control de numeros de corriente para nombres
-    numero_corriente = 1
-
     def __init__(self, simulacion, tab):
         super().__init__()
 
@@ -86,9 +83,6 @@ class Configuracion(QtWidgets.QWidget):
 
         self.show()
 
-
-
-
     def build_ui(self, tab):
         """Construye la interfaz de usuario a partir de la clase generada por qtdesigner"""
         self.ui = Ui_Configuracion()
@@ -99,6 +93,7 @@ class Configuracion(QtWidgets.QWidget):
         self.ui.compuestosTabla.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
 
         # Señales
+
         # Tab Compuestos
         self.ui.buscarEdit.textEdited.connect(self.buscar)
         self.ui.agregarCompuesto.clicked.connect(self.agregar_compuesto)
@@ -111,18 +106,11 @@ class Configuracion(QtWidgets.QWidget):
         self.ui.paquetesDisponibles.itemDoubleClicked.connect(
             self.seleccionar_paquete_propiedades)
 
-        # Tab corrientes
-        self.ui.agregarCorriente.clicked.connect(self.crear_corriente)
-        self.ui.eliminarCorriente.clicked.connect(self.eliminar_corriente)
-        self.ui.listaCorrientes.itemClicked.connect(self.llenar_datos_corriente)
-        self.ui.modificarComposicion.clicked.connect(self.modificar_composicion)
-        self.ui.actualizarCorriente.clicked.connect(self.actualizar_corriente)
-
         # cargar datos de simulacion
         self._cargar_lista_compuestos()
         self._cargar_compuestos()
         self._cargar_paquete_propiedades()
-        self._cargar_corrientes()
+
 
     def _cargar_compuestos(self):
         """Carga los compuestos de la simulacion a la lista de compuestos seleccionados"""
@@ -133,11 +121,6 @@ class Configuracion(QtWidgets.QWidget):
         """Carga el paquete de propiedades de la simulacion a la lista de paquete seleccionado"""
         if self.simulacion.paquete_propiedades:
             self.ui.paqueteSeleccionado.addItem(self.simulacion.paquete_propiedades.nombre)
-
-    def _cargar_corrientes(self):
-        """Carga las corrientes de la simulacion a la lista de corrientes"""
-        for corriente in self.simulacion.corrientes:
-            self.ui.listaCorrientes.addItem(corriente.nombre)
 
     def _cargar_lista_compuestos(self):
         """Cargar la lista de todos los compuestos disponibles en el simulador"""
@@ -199,57 +182,7 @@ class Configuracion(QtWidgets.QWidget):
             self.ui.paqueteSeleccionado.takeItem(0)
             self.ui.paqueteSeleccionado.addItem(paquete_seleccionado)
 
-
-    def _corriente_seleccionada(self):
-        """Retorna la corriente seleccionada en la lista de corrientes"""
-        pos_corriente = self.ui.listaCorrientes.currentRow()
-        return self.simulacion.corrientes[pos_corriente]
-
-    def crear_corriente(self):
-        """Crea una corriente en la simulación y la agrega a la lista de corrientes"""
-        nombre_corriente = f"Corriente {self.numero_corriente}"
-
-        # Aumentamos el contador global de corrientes
-        self.__class__.numero_corriente += 1
-
-        self.simulacion.crear_corriente(nombre_corriente)
-        self.ui.listaCorrientes.addItem(nombre_corriente)
-
-    def eliminar_corriente(self):
-        """Elimina la corriente seleccionada de la lista de corrientes y de la simulación"""
-        pos_corriente = self.ui.listaCorrientes.currentRow()
-        self.ui.listaCorrientes.takeItem(pos_corriente)
-        del self.simulacion.corrientes[pos_corriente]
-
-    def llenar_datos_corriente(self):
-        """Toma los datos de la corriente seleccionada y los agrega a la forma de datos
-        de corrientes"""
-        corriente = self._corriente_seleccionada()
-
-        self.ui.flujoLineEdit.setText(f'{corriente.flujo}')
-        self.ui.temperaturaLineEdit.setText(f'{corriente.temperatura}')
-        self.ui.presionLineEdit.setText(f'{corriente.presion}')
-
-    def actualizar_corriente(self):
-        """Actualiza los datos de la corriente seleccionada con los datos introducidos
-        en la forma de datos de corriente"""
-        flujo, temperatura, presion = (self.ui.flujoLineEdit.text(),
-                                       self.ui.temperaturaLineEdit.text(),
-                                       self.ui.presionLineEdit.text())
-
-        corriente = self._corriente_seleccionada()
-        corriente.flujo = flujo
-        corriente.temperatura = temperatura
-        corriente.presion = presion
-
-    def modificar_composicion(self):
-        """Abre el modificador de corriente si hay alguna corriente seleccionada"""
-        corriente = self._corriente_seleccionada()
-        if corriente:
-            self.modifica_composicion = ModificaComposicion(corriente)
-
     def closeEvent(self, reason):
-        self.simulacion.actualizar()
         super().closeEvent(reason)
 
     def guardar_configuracion(self):
@@ -258,8 +191,6 @@ class Configuracion(QtWidgets.QWidget):
 
         # Guardando paquete termodinamico
         self.simulacion.paquete_propiedades = self.ui.paqueteSeleccionado.takeItem(0)
-
-        # Guardando corrientes
 
 
 
@@ -513,3 +444,88 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
         destilacion.salidas_laterales = salidas_laterales
         destilacion.condensador = condensador
 
+
+class ConfiguracionCorrientes(QtWidgets.QWidget):
+
+    ui = None
+
+    # Control de numeros de corriente para nombres
+    numero_corriente = 1
+
+    def __init__(self, simulacion):
+        super().__init__()
+        self.simulacion = simulacion
+
+
+        self.build_ui()
+        self.show()
+
+    def build_ui(self):
+        """Construye la interfaz de usuario a partir de la clase generada por qtdesigner"""
+        self.ui = Ui_Corrientes()
+        self.ui.setupUi(self)
+
+        # Señales
+        self.ui.agregarCorriente.clicked.connect(self.crear_corriente)
+        self.ui.eliminarCorriente.clicked.connect(self.eliminar_corriente)
+        self.ui.listaCorrientes.itemClicked.connect(self.llenar_datos_corriente)
+        self.ui.modificarComposicion.clicked.connect(self.modificar_composicion)
+        self.ui.actualizarCorriente.clicked.connect(self.actualizar_corriente)
+
+        # Cargando datos de simulación
+        self._cargar_corrientes()
+
+
+    def _cargar_corrientes(self):
+        """Carga las corrientes de la simulacion a la lista de corrientes"""
+        for corriente in self.simulacion.corrientes:
+            self.ui.listaCorrientes.addItem(corriente.nombre)
+
+
+    def _corriente_seleccionada(self):
+        """Retorna la corriente seleccionada en la lista de corrientes"""
+        pos_corriente = self.ui.listaCorrientes.currentRow()
+        return self.simulacion.corrientes[pos_corriente]
+
+    def crear_corriente(self):
+        """Crea una corriente en la simulación y la agrega a la lista de corrientes"""
+        nombre_corriente = f"Corriente {self.numero_corriente}"
+
+        # Aumentamos el contador global de corrientes
+        self.__class__.numero_corriente += 1
+
+        self.simulacion.crear_corriente(nombre_corriente)
+        self.ui.listaCorrientes.addItem(nombre_corriente)
+
+    def eliminar_corriente(self):
+        """Elimina la corriente seleccionada de la lista de corrientes y de la simulación"""
+        pos_corriente = self.ui.listaCorrientes.currentRow()
+        self.ui.listaCorrientes.takeItem(pos_corriente)
+        del self.simulacion.corrientes[pos_corriente]
+
+    def llenar_datos_corriente(self):
+        """Toma los datos de la corriente seleccionada y los agrega a la forma de datos
+        de corrientes"""
+        corriente = self._corriente_seleccionada()
+
+        self.ui.flujoLineEdit.setText(f'{corriente.flujo}')
+        self.ui.temperaturaLineEdit.setText(f'{corriente.temperatura}')
+        self.ui.presionLineEdit.setText(f'{corriente.presion}')
+
+    def actualizar_corriente(self):
+        """Actualiza los datos de la corriente seleccionada con los datos introducidos
+        en la forma de datos de corriente"""
+        flujo, temperatura, presion = (self.ui.flujoLineEdit.text(),
+                                       self.ui.temperaturaLineEdit.text(),
+                                       self.ui.presionLineEdit.text())
+
+        corriente = self._corriente_seleccionada()
+        corriente.flujo = flujo
+        corriente.temperatura = temperatura
+        corriente.presion = presion
+
+    def modificar_composicion(self):
+        """Abre el modificador de corriente si hay alguna corriente seleccionada"""
+        corriente = self._corriente_seleccionada()
+        if corriente:
+            self.modifica_composicion = ModificaComposicion(corriente)
