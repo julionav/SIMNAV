@@ -101,7 +101,7 @@ class Ui_VistaPrincipal(object):
         self.actionCompuestos.setText(_translate("VistaPrincipal", "Compuestos"))
         self.actionPropiedades.setText(_translate("VistaPrincipal", "Propiedades"))
         self.actionCorrientes.setText(_translate("VistaPrincipal", "Corrientes"))
-        self.actionSimular.setText(_translate("VistaPrincipal", "Resultados"))
+        self.actionSimular.setText(_translate("VistaPrincipal", "Simular"))
         self.actionAbrir.setText(_translate("VistaPrincipal", "Abrir"))
         self.actionCerrar.setText(_translate("VistaPrincipal", "Guardar"))
         self.actionSalir.setText(_translate("VistaPrincipal", "Salir"))

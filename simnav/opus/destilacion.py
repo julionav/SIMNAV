@@ -18,11 +18,9 @@ class DestilacionSemiRigurosa:
         :param numero_platos: numero de platos de la torre
         :param destilado: flujo de destilado de la torre (kmol/h)
         :param reflujo: relacion de reflujo de la torre
-        :param alimentaciones: lista de diccionarios con la informacion de las corrientes
-        de entrada a la columna
-        :param corrientes_salida: lista de diccionarios de la infomacion de las corrientes de
-        salida de la torre
-        :param gestor_propiedades_mezcla: instancia del gestor de propiedades
+        :param alimentaciones: lista de corrientes de alimentacion [plato, corriente]
+        :param salidas_laterales: lista de flujos (kmol/h) de salida lateral [plato, flujo]
+        :param paquete_termodinamico: instancia del un paquete termodinamico
         :param presion:
         """
         self.numero_platos = numero_platos  # Numero de platos de la torre
@@ -34,13 +32,16 @@ class DestilacionSemiRigurosa:
         self.propiedades = paquete_termodinamico
         self.condensador = "Parcial"
 
-    def calcular(self):
+    def simular(self):
         """
         Determina las composciciones, flujos y temperaturas plato a plato en la torre
         """
         # Se crean referencias de atajo para los parametros de la torre
         N, R, D = self.numero_platos, self.reflujo, self.destilado
         NC = len(self.propiedades.compuestos)
+
+        # Tipo de condensador
+        condensador_parcial = self.condensador == 'Parcial'
 
         # Presion de cada plato. Considerando que no hay caida de presion.
         # TODO: Considerar caida de presion
@@ -65,7 +66,7 @@ class DestilacionSemiRigurosa:
             zF[indice] = corriente.composicion
 
         # Valores iniciales de calculo
-        if self.condensador == 'Parcial':
+        if condensador_parcial:
             V[0] = D  # El flujo de vapor de salida por el tope (etapa 0) es igual al destilado
             V[1] = D * (R + 1)  # Flujo de vapor
             print(V[1])
@@ -167,7 +168,7 @@ class DestilacionSemiRigurosa:
                                    + Q[n]) / hV[n] - SV[n])
             # Criterio de error en el flujo de vapor
 
-            if destilador_parcial:
+            if condensador_parcial:
                 V[2:] = V_nuevo[2:]
                 errorV = np.sum((V_nuevo[2:] - V[2:]) ** 2)
             else:
@@ -180,7 +181,5 @@ class DestilacionSemiRigurosa:
             contador_T = 0
             if contador_V >= 100:
                 raise RuntimeError('Contador de ciclo de vapor over 200')
-        print('CV', contador_V)
-        print('V', V)
-        print('x', x)
-        print('y', y)
+
+        return V, T, L, x, y

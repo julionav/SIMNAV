@@ -2,9 +2,10 @@
 import logging
 
 from simnav.corrientes import CorrienteMateria
-from simnav.termodinamica import PaqueteIdeal
+from simnav.termodinamica import GestorPaquetes
 from simnav.datos.db import Componentes, session
 from simnav.opus.destilacion import DestilacionSemiRigurosa
+
 
 class Simulacion:
     """LLeva el control de alto nivel de la simulacion"""
@@ -15,8 +16,9 @@ class Simulacion:
 
         self.compuestos = []
         self.corrientes = []
-        self._paquete_propiedades = None
-        self.destilacion = DestilacionSemiRigurosa()
+        self._paquete_propiedades = GestorPaquetes(self.compuestos)
+        self.destilacion = DestilacionSemiRigurosa(
+            paquete_termodinamico=self.paquete_propiedades)
 
     @property
     def paquete_propiedades(self):
@@ -25,17 +27,7 @@ class Simulacion:
     @paquete_propiedades.setter
     def paquete_propiedades(self, paquete):
         """Inicializa el paquete de propiedades segun el nombre provisto"""
-
-        if (self._paquete_propiedades and paquete == self._paquete_propiedades.nombre) or not paquete:
-            return
-
-        if paquete == 'Ideal':
-            self._paquete_propiedades = PaqueteIdeal(self.compuestos)
-        elif paquete == 'Peng-Robinson':
-            "Este paquete no ha sido implementado aun. Pronto lo sera"
-            self._paquete_propiedades = PaqueteIdeal(self.compuestos)
-
-        self.logger.debug('paquete de propiedades a sido asginado')
+        self._paquete_propiedades.seleccionar_paquete(paquete)
 
     def lista_compuestos(self):
         """Retorna la lista de compuestos disponibles en la base de datos"""
@@ -50,3 +42,9 @@ class Simulacion:
         self.corrientes.append(
             CorrienteMateria(nombre, self.compuestos, self.paquete_propiedades, flujo,
                              temperatura, composicion, presion))
+
+    def simular(self):
+        """Corre la simulación de la columna de destilacion"""
+        self.paquete_propiedades.preparar()
+        resultados = self.destilacion.simular()
+        print(resultados)

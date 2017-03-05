@@ -43,8 +43,6 @@ class CorrienteMateria:
 
     def actualizar(self):
         """Actualiza la corriente con los nuevos datos de simulación (nuevos compuestos)"""
-        self.logger.debug(f'actualizando corriente {self.nombre}')
-        print(self.compuestos, self.compuestos_conocidos)
         if self.compuestos != self.compuestos_conocidos:
             # Se resetea la composicion si los compuestos han cambiado
             self.logger.debug(f'Reseteando composicion de corriente {self.nombre}')

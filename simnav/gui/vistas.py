@@ -5,7 +5,10 @@ from pathlib import Path
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
-from simnav.gui.base import Ui_VistaPrincipal, Ui_Configuracion, Ui_Composicion, Ui_Destilacion, Ui_Corrientes
+from simnav.gui.base import Ui_VistaPrincipal, Ui_Configuracion, Ui_Composicion, Ui_Destilacion, \
+    Ui_Corrientes
+
+
 # from simnav.gui.utils import StdOutToTextBox, LogToStdOut
 
 
@@ -50,16 +53,17 @@ class VistaPrincipal(QtWidgets.QMainWindow):
             QtGui.QPixmap(str(imagen_torre)))
 
         # Redireccionando la salida de texto estandar al text browser TODO
-        #sys.stdout = StdOutToTextBox(self.ui.textBrowser)
+        # sys.stdout = StdOutToTextBox(self.ui.textBrowser)
 
         # Conectando señales
         self.ui.actionCompuestos.triggered.connect(partial(self.abrir_conf_propiedades, 0))
         self.ui.actionPropiedades.triggered.connect(partial(self.abrir_conf_propiedades, 1))
         self.ui.actionCorrientes.triggered.connect(self.abrir_conf_corrientes)
         self.ui.actionDestilacion.triggered.connect(self.abrir_conf_destilacion)
+        self.ui.actionSimular.triggered.connect(self.simulacion.simular)
 
     def closeEvent(self, status):
-        # Se sobreescribe esta funcion para cerrar el proceso al cerrar la ventana
+        # Se sobreescribe esta funcion para terminar el proceso al cerrar la ventana
         sys.exit()
 
     def abrir_conf_propiedades(self, tab):
@@ -215,6 +219,9 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
         # Cantidad maxima de salidas laterales igual a la cantidad de platos menos el tope y el fondo (2)
         self._salidas_laterales_maximas = self.simulacion.destilacion.numero_platos - 2
 
+        # Logging
+        self.logger = logging.getLogger(__name__)
+
         # Inicializando interfaz de usuario
         self.build_ui()
         self.show()
@@ -247,11 +254,8 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
 
     def _cargar_alimentaciones(self):
         """Carga las corrientes de alimentaciones del destilador"""
-        for fila, (corriente, plato) in enumerate(self.simulacion.destilacion.alimentaciones):
-            self.ui.tablaAlimentacion.setItem(fila, 0,
-                                              QtWidgets.QTableWidgetItem(plato))
-            self.ui.tablaAlimentacion.setItem(fila, 1,
-                                              QtWidgets.QTableWidgetItem(corriente.nombre))
+        for fila, (plato, corriente) in enumerate(self.simulacion.destilacion.alimentaciones):
+            self.agregar_alimentacion(plato, self.simulacion.corrientes.index(corriente))
 
     def _cargar_salidas_laterales(self):
         """Carga las salidas laterales del simulador a la interfaz"""
@@ -277,56 +281,74 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
             tabla.setRowCount(filas_actuales + 1)
         return filas_actuales + 1
 
-    def _cbox_platos(self):
+    def _cbox_platos(self, plato=1):
+        """
+        Retorna un Qt Combo Box que contine los platos disponibles para la simulacion.
+        :param plato: (opcional) plato para colocar como actual en el combo box
+        :return:
+        """
         cbox = QtWidgets.QComboBox()
         numero_platos = self.simulacion.destilacion.numero_platos
 
         # Se limita los platos disponibles a todos menos el tope y fondo.
         cbox.addItems([str(plato) for plato in range(numero_platos) if plato])
+        cbox.setCurrentIndex(plato)
         return cbox
 
-    def agregar_alimentacion(self):
-        """Agrega un item a la tabla de alimentaciones que contiene un comboBox para
-        seleccionar las corrientes disponibles en la simulacion"""
+    def agregar_alimentacion(self, plato=1, posicion_corriente=0):
+        """
+        Agrega una alimentación a la tabla de alimentaciones que contiene dos comboBox para
+        seleccionar las corrientes disponibles en la simulacion y el plato de entrada
+        correspondiente
+        :param plato: (opcional) para colorcar como plato actual en el cbox de platos
+        :param posicion_corriente: (opcional) posicion actual para colocar el cbox de alim
+        :return:
+        """
 
-        # Agrandando la cantidad de filas de la torre si esta no excede la cantidad de corrientes disponibles.
-        filas_tabla = self._agrandar_tabla(self.ui.tablaAlimentacion, self._alimentaciones_maximas)
+        # Agrandando la cantidad de filas de la torre si esta no excede la cantidad de
+        # corrientes disponibles.
+        filas_tabla = self._agrandar_tabla(self.ui.tablaAlimentacion,
+                                           self._alimentaciones_maximas)
 
         # Alimentaciones disponibles
         # TODO: Una corriente conectada a una alimentación no puede volver a conectarse
         cbox_alim = QtWidgets.QComboBox()
         cbox_alim.addItems([corriente.nombre for corriente in self.simulacion.corrientes])
+        cbox_alim.setCurrentIndex(posicion_corriente)
 
         # Agregando las widgets a la tabla
         ultima_fila = filas_tabla - 1
-        self.ui.tablaAlimentacion.setCellWidget(ultima_fila, 0, self._cbox_platos())
+        self.ui.tablaAlimentacion.setCellWidget(ultima_fila, 0, self._cbox_platos(plato))
         self.ui.tablaAlimentacion.setCellWidget(ultima_fila, 1, cbox_alim)
 
     def alimentaciones(self):
         """Revisa que las alimentaciones introducidas sean diferentes entre si
         Si no hay corrientes o platos repetidos se retorna una lista [plato, corriente]"""
 
-        corrientes = set()
+        posiciones_corrientes = set()
         platos = set()
-        alimentacions = []  # Lista de alimentaciones y sus platos
+        alimentaciones = []  # Lista de alimentaciones y sus platos
 
         for row in range(self.ui.tablaAlimentacion.rowCount()):
-            corriente = self.ui.tablaAlimentacion.cellWdiget(row, 1).currentIndex()
-            plato = self.ui.tablaAlimentacion.cellWdiget(row, 0).currentIndex()
+            posicion_corriente = self.ui.tablaAlimentacion.cellWidget(row, 1).currentIndex()
+            plato = self.ui.tablaAlimentacion.cellWidget(row, 0).currentIndex()
 
-            if corriente not in corrientes and plato not in platos:
-                corrientes.add(corriente)
+            if posicion_corriente not in posiciones_corrientes and plato not in platos:
+                posiciones_corrientes.add(posicion_corriente)
+                corriente = self.simulacion.corrientes[posicion_corriente]
                 platos.add(plato)
-                alimentacions.append([plato, corriente])
+                alimentaciones.append([plato, corriente])
 
             else:
-                return False
-        return True
+                raise ValueError("Existe un conflicto en las alimentaciones seleccioandas. "
+                                 "Asegurese que no haya plato ni corriente repetida")
+        return alimentaciones
 
     def agregar_salida_lateral(self):
         """Agrega una salida lateral a la tabla de salidas laterales"""
         # Agrandando tabla
-        filas_tabla = self._agrandar_tabla(self.ui.tablaProductos, self._salidas_laterales_maximas)
+        filas_tabla = self._agrandar_tabla(self.ui.tablaProductos,
+                                           self._salidas_laterales_maximas)
 
         ultima_fila = filas_tabla - 1
         self.ui.tablaProductos.setCellWidget(ultima_fila, 0, self._cbox_platos())
@@ -341,7 +363,8 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
             try:
                 flujo = float(self.ui.tablaProductos.item(row, 0).text())
             except ValueError:
-                print(f'El flujo del plato asignado al plato {plato} no es un flotante')
+                raise ValueError(f'El flujo del plato asignado al plato {plato} no es'
+                                 f' un flotante')
 
             if plato not in platos:
                 platos.add(plato)
@@ -364,32 +387,39 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
             numero_platos = int(numero_platos)
 
         except ValueError:
-            print("Ocurrio un error validando los datos de la torre. Verifique que los datos suministrados")
-            return False
+            raise ValueError("Ocurrio un error validando los datos de la torre. Verifique "
+                             "los datos suministrados")
+
         else:
             return destilado, presion, numero_platos, condensador
 
     def aceptar(self):
         """Acepta los datos suministrados y los usa para la simulación"""
-        datos_torre = self.datos_torre()
-        salidas_laterales = self.salidas_laterales()
-        alimentaciones = self.alimentaciones()
+        try:
+            datos_torre = self.datos_torre()
+            salidas_laterales = self.salidas_laterales()
+            alimentaciones = self.alimentaciones()
 
-        if not (datos_torre and salidas_laterales and alimentaciones):
-            print("Ocurrio un problema validando la configuración de la torre")
-            return False
+        except ValueError as error:
+            self.logger.error(error)
+            return
 
-        destilado, presion, numero_platos, condensador = datos_torre
+        else:
+            self.logger.debug("Aceptando configuracion de destilación",
+                              *datos_torre, *alimentaciones, *salidas_laterales)
 
-        # Se actualizan los datos de la simulación
-        destilacion = self.simulacion.destilacion
+            destilado, presion, numero_platos, condensador = datos_torre
+            # Se actualizan los datos de la simulación
+            destilacion = self.simulacion.destilacion
 
-        destilacion.numero_platos = numero_platos
-        destilacion.presion = presion
-        destilacion.destilado = destilado
-        destilacion.alimentaciones = alimentaciones
-        destilacion.salidas_laterales = salidas_laterales
-        destilacion.condensador = condensador
+            destilacion.numero_platos = numero_platos
+            destilacion.presion = presion
+            destilacion.destilado = destilado
+            destilacion.condensador = condensador
+
+            destilacion.alimentaciones = alimentaciones
+            destilacion.salidas_laterales = salidas_laterales
+            self.close()
 
 
 class ConfiguracionCorrientes(QtWidgets.QWidget):

@@ -32,14 +32,23 @@ class PaqueteIdeal:
         :param compuestos: Lista de compuestos
         """
         self.compuestos = compuestos
+        self.parametros = GestorParametros(self.compuestos)
+
         # Funciones vectorizadas
         self.entalpia_cp = np.vectorize(ideal.entalpia_cp, excluded=['T1', 'ecuacion_cp'])
 
-    def iniciar(self):
-        """Metodo a ser llamado al iniciar la simulacion"""
+
+        # Variables para guardar valores de propiedades constantes. Como lo es la entalpia de
+        # vaporizacion a T de referencia
+        self._entalpias_vaporizacion = None
+
+        self.numero_compuestos = 0
+        self.temperaturas_ref = None  # Array de temperaturas de referencia
+
+    def preparar(self):
+        """Metodo a ser llamado antes de iniciar la simulacion"""
 
         self.numero_compuestos = len(self.compuestos)
-        self.parametros = GestorParametros(self.compuestos)
 
         # Temperatura de referencia (h=0, s=0 para liquido saturado a 1atm)
         self.temperaturas_ref = np.array(self.temperatura_saturacion(101325))
