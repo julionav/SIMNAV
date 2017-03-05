@@ -1,6 +1,7 @@
 """Cliente de simnav. Encargado de proveer inicializar los modelos y las vistas"""
 
 import sys
+import logging
 
 from PyQt5 import QtWidgets
 
@@ -13,6 +14,12 @@ class Aplicacion(QtWidgets.QApplication):
         """Inicializa la simulacion y las vistas. Pasando la referencia de la
         simulacion a la vista principal"""
         super().__init__(sys_argv)
+
+        # Logging
+        logging.basicConfig(level=logging.DEBUG)
+        logger = logging.getLogger(__name__)
+        logger.info('Inciando Aplicación')
+
         self.simulacion = Simulacion()
         self.main_view = VistaPrincipal(self.simulacion)
         self.main_view.show()

@@ -165,9 +165,6 @@ class Ui_Configuracion(object):
         self.tabWidget.addTab(self.propiedades, "")
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         self.gridLayout_2.addLayout(self.gridLayout, 0, 0, 1, 1)
-        self.pushButton_3 = QtWidgets.QPushButton(Configuracion)
-        self.pushButton_3.setObjectName("pushButton_3")
-        self.gridLayout_2.addWidget(self.pushButton_3, 1, 0, 1, 1, QtCore.Qt.AlignRight)
 
         self.retranslateUi(Configuracion)
         QtCore.QMetaObject.connectSlotsByName(Configuracion)
@@ -211,5 +208,5 @@ class Ui_Configuracion(object):
         self.descripcionPaquete.setText(_translate("Configuracion", "Descripcion extensiva de lo que contiene el paquete de propiedades\n"
 "Al clickearlo"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.propiedades), _translate("Configuracion", "Propiedades"))
-        self.pushButton_3.setText(_translate("Configuracion", "Guardar Cambio"))
+
 

@@ -1,5 +1,6 @@
 """Modulo con objetos y utilidades para el manejo de sustancias, mezclas y corrientes"""
 
+import logging
 
 class CorrienteMateria:
     """
@@ -27,21 +28,28 @@ class CorrienteMateria:
         self.paquete_termodinamico = paquete_termodinamico
         self._entalpia = None
 
+        # Compuestos conocidos por la corriente (pueden cambiar)
+        self.compuestos_conocidos = list(compuestos)
+
         # Composicion de uso interno
-        self._composicion = composicion or [0 for _ in range(len(self.compuestos))]
+        self.composicion = composicion or [0 for _ in range(len(self.compuestos))]
+
+        # Logging
+        self.logger = logging.getLogger(__name__)
 
     def __iter__(self):
         for compuesto, fraccion in zip(self.compuestos, self.composicion):
             yield compuesto, fraccion
 
-    @property
-    def composicion(self):
-        # Se verifica si la lista de compuestos no ha sido modificada antes de retornar la
-        # Composicion. SI ha sido modificada se resetea la composicion.
-        if len(self._composicion) != len(self.compuestos):
-            self._composicion = [0 for _ in range(len(self.compuestos))]
-
-        return self._composicion
+    def actualizar(self):
+        """Actualiza la corriente con los nuevos datos de simulación (nuevos compuestos)"""
+        self.logger.debug(f'actualizando corriente {self.nombre}')
+        print(self.compuestos, self.compuestos_conocidos)
+        if self.compuestos != self.compuestos_conocidos:
+            # Se resetea la composicion si los compuestos han cambiado
+            self.logger.debug(f'Reseteando composicion de corriente {self.nombre}')
+            self.composicion = [0 for _ in range(len(self.compuestos))]
+            self.compuestos_conocidos = list(self.compuestos)
 
     @property
     def entalpia(self):

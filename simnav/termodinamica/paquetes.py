@@ -192,16 +192,20 @@ class PaqueteIdeal:
                     else:
                         temp_cambio_ec = p_hiperbolicos[i].TminK
 
-                    delta_vapor_1 = delta_entalpia(  # desde la T_ref hasta cambio de ec
+                    # desde la T_ref hasta cambio de ec
+                    delta_vapor_1 = delta_entalpia(
                         temperatura_inicial=self.temperaturas_ref[i],
                         temperatura_final=temp_cambio_ec,
                         ecuacion=ec_Tref,
                         parametros=lista_parametros[ec_Tref][i])
-                    delta_vapor_2 = delta_entalpia(  # desde cambio de ec hasta T_final
+
+                    # desde cambio de ec hasta T_final
+                    delta_vapor_2 = delta_entalpia(
                         temperatura_inicial=temp_cambio_ec,
                         temperatura_final=temperatura[n, i],
                         ecuacion=ec_Treal,
                         parametros=lista_parametros[ec_Treal][i])
+
                     delta_vapor = delta_vapor_1 + delta_vapor_2
                 entalpias_vapor[n, i] = delta_vapor + entalpias_vaporizacion[i]
 

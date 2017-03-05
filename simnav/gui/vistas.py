@@ -6,7 +6,7 @@ from pathlib import Path
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 from simnav.gui.base import Ui_VistaPrincipal, Ui_Configuracion, Ui_Composicion, Ui_Destilacion, Ui_Corrientes
-from simnav.gui.utils import StdOutToTextBox, LogToStdOut
+# from simnav.gui.utils import StdOutToTextBox, LogToStdOut
 
 
 # TODO: REMUEVE TODOS LOS DRAG's
@@ -14,19 +14,27 @@ class VistaPrincipal(QtWidgets.QMainWindow):
     def __init__(self, simulacion):
         super().__init__()
         self.simulacion = simulacion
+
         # Logging
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug('Inicializando vista principal')
+
+        """# Logging
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         handler = LogToStdOut()
         handler.setFormatter(logging.Formatter('%(name)s - %(levelname)s: %(message)s'))
-        self.logger.addHandler(handler)
+        self.logger.addHandler(handler)"""
 
+        # Variables de interfaz de usuario
+        self.conf_destilacion = None
+        self.ui = None
+        self.conf_corrientes = None
+        self.conf_propiedades = None
+
+        # Inicializando ui
         self.move(100, 100)
         self.build_ui()
-
-        # Ventanas extra
-        self.config = None
-        self.conf_destilacion = None
 
     def build_ui(self):
         """Construye la interfaz de usuario a partir de la clase generada por qtdesigner"""
@@ -41,38 +49,46 @@ class VistaPrincipal(QtWidgets.QMainWindow):
         self.ui.dibujoTorre.setPixmap(
             QtGui.QPixmap(str(imagen_torre)))
 
-        # Redireccionando la salida de texto estandar al text browser
-        sys.stdout = StdOutToTextBox(self.ui.textBrowser)
+        # Redireccionando la salida de texto estandar al text browser TODO
+        #sys.stdout = StdOutToTextBox(self.ui.textBrowser)
 
         # Conectando señales
-        self.ui.actionCompuestos.triggered.connect(partial(self.abrir_configuracion, 0))
-        self.ui.actionPropiedades.triggered.connect(partial(self.abrir_configuracion, 1))
-        self.ui.actionCorrientes.triggered.connect(partial(self.abrir_configuracion, 2))
+        self.ui.actionCompuestos.triggered.connect(partial(self.abrir_conf_propiedades, 0))
+        self.ui.actionPropiedades.triggered.connect(partial(self.abrir_conf_propiedades, 1))
+        self.ui.actionCorrientes.triggered.connect(self.abrir_conf_corrientes)
         self.ui.actionDestilacion.triggered.connect(self.abrir_conf_destilacion)
 
     def closeEvent(self, status):
-        # Se sobreescribe esta funcion para que cierre todo el proceso al cerrar la ventana
+        # Se sobreescribe esta funcion para cerrar el proceso al cerrar la ventana
         sys.exit()
 
-    def abrir_configuracion(self, tab):
-        self.config = Configuracion(self.simulacion, tab)
+    def abrir_conf_propiedades(self, tab):
+        self.conf_propiedades = ConfiguracionPropiedades(self.simulacion, tab)
 
     def abrir_conf_destilacion(self):
         self.conf_destilacion = ConfiguracionDestilacion(self.simulacion)
 
+    def abrir_conf_corrientes(self):
+        self.conf_corrientes = ConfiguracionCorrientes(self.simulacion)
 
-class Configuracion(QtWidgets.QWidget):
-    """Ventana de configuracion de simnav"""
+
+class ConfiguracionPropiedades(QtWidgets.QWidget):
+    """Ventana de configuracion de propiedades simnav. Permite la selección de paquetes termodinamicos
+    y de compuestos."""
 
     def __init__(self, simulacion, tab):
         super().__init__()
 
-        # Copiamos la simulación para trabajar sobre ella y no afectar la real
         self.simulacion = simulacion
-        self.compuestos_seleccionados = list(simulacion.compuestos)
+
+        # Lista interna para guardar los componentes sin afectar la simulación.
+        self.compuestos = simulacion.compuestos
 
         # Moviendo la ventana a una posicion apropiada.
         self.move(500, 100)
+
+        # Logging
+        self.logger = logging.getLogger(__name__)
 
         # Interfaz
         self.ui = None
@@ -92,7 +108,7 @@ class Configuracion(QtWidgets.QWidget):
         # Configuracion de la ui
         self.ui.compuestosTabla.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
 
-        # Señales
+        # -- Señales
 
         # Tab Compuestos
         self.ui.buscarEdit.textEdited.connect(self.buscar)
@@ -110,7 +126,6 @@ class Configuracion(QtWidgets.QWidget):
         self._cargar_lista_compuestos()
         self._cargar_compuestos()
         self._cargar_paquete_propiedades()
-
 
     def _cargar_compuestos(self):
         """Carga los compuestos de la simulacion a la lista de compuestos seleccionados"""
@@ -153,8 +168,8 @@ class Configuracion(QtWidgets.QWidget):
             # De la fila seleccionada se utiliza el nombre del componente en ingles
             compuesto_seleccionado = self.ui.compuestosTabla.item(fila_seleccionada, 1).text()
             # se chequea que el compuesto no este ya en la lista
-            if compuesto_seleccionado not in self.compuestos_seleccionados:
-                self.compuestos_seleccionados.append(compuesto_seleccionado)
+            if compuesto_seleccionado not in self.compuestos:
+                self.compuestos.append(compuesto_seleccionado)
                 self.ui.compuestosSeleccionadosList.addItem(compuesto_seleccionado)
 
     def eliminar_compuesto(self):
@@ -163,12 +178,12 @@ class Configuracion(QtWidgets.QWidget):
         compuesto_seleccionado = self.ui.compuestosSeleccionadosList.currentRow()
         if compuesto_seleccionado >= 0:
             self.ui.compuestosSeleccionadosList.takeItem(compuesto_seleccionado)
-            self.compuestos_seleccionados.pop(compuesto_seleccionado)
+            self.compuestos.pop(compuesto_seleccionado)
 
     def limpiar_lista(self):
         """Elimina todos los compuestos de la lista de compuestos seleccionados y de la
         simulacion"""
-        self.compuestos_seleccionados.clear()
+        self.compuestos.clear()
         for fila in range(self.ui.compuestosSeleccionadosList.count()):
             self.ui.compuestosSeleccionadosList.takeItem(0)
 
@@ -182,75 +197,6 @@ class Configuracion(QtWidgets.QWidget):
             self.ui.paqueteSeleccionado.takeItem(0)
             self.ui.paqueteSeleccionado.addItem(paquete_seleccionado)
 
-    def closeEvent(self, reason):
-        super().closeEvent(reason)
-
-    def guardar_configuracion(self):
-        # Guardando compuestos
-        self.simulacion.compuestos = self.compuestos_seleccionados
-
-        # Guardando paquete termodinamico
-        self.simulacion.paquete_propiedades = self.ui.paqueteSeleccionado.takeItem(0)
-
-
-
-class ModificaComposicion(QtWidgets.QWidget):
-    def __init__(self, corriente):
-        super().__init__()
-        self.corriente = corriente
-
-        # Ui
-        self.ui = None
-        self.build_ui()
-
-        self.show()
-
-    def build_ui(self):
-        """Construye la interfaz de usuario a partir de la clase generada por qtdesigner"""
-        self.ui = Ui_Composicion()
-        self.ui.setupUi(self)
-        self.ui.tablaComposicion.setRowCount(len(self.corriente.compuestos))
-        for fila, (compuesto, fraccion) in enumerate(self.corriente):
-            item_compuesto = QtWidgets.QTableWidgetItem(compuesto)
-            item_compuesto.setFlags(QtCore.Qt.ItemIsEnabled)
-            self.ui.tablaComposicion.setItem(fila, 0,
-                                             item_compuesto)
-            self.ui.tablaComposicion.setItem(fila, 1,
-                                             QtWidgets.QTableWidgetItem(str(fraccion)))
-
-            # Conectando señales
-            self.ui.aceptar.clicked.connect(self.aceptar)
-            self.ui.normalizar.clicked.connect(self.normalizar)
-
-    def _rango_tabla(self):
-        yield from range(len(self.corriente.compuestos))
-
-    def aceptar(self):
-        """Acepta la composicion introducida -- normalizandola en el proceso."""
-        self.normalizar()
-        for fila in self._rango_tabla():
-            fraccion = float(self.ui.tablaComposicion.item(fila, 1).text())
-            self.corriente.composicion[fila] = fraccion
-        self.close()
-
-    def normalizar(self):
-        """Normaliza la composicion introducida (La sumatoria de las fracciones igual a 1)"""
-        # Obteniendo la composicion
-        composicion = []
-        for fila in self._rango_tabla():
-            composicion.append(float(self.ui.tablaComposicion.item(fila, 1).text()))
-
-        # Verificando la suma
-        sum_composicion = sum(composicion)
-        if sum_composicion != 1:
-            for fila in self._rango_tabla():
-                # Se divide cada fraccion entre la sumatoria de ellas para normalizarla
-                fraccion = float(self.ui.tablaComposicion.item(fila, 1).text())
-                nueva_fraccion = str(round(fraccion / sum_composicion, 4))
-                self.ui.tablaComposicion.item(fila, 1).setText(nueva_fraccion)
-        else:
-            return
-
 
 class ConfiguracionDestilacion(QtWidgets.QWidget):
     # TODO: Cambiar titulo de ventana
@@ -258,9 +204,6 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
     def __init__(self, simulacion):
         super().__init__()
         self.simulacion = simulacion
-
-        self.build_ui()
-        self.show()
 
         # Contadores
         # Lleva la posicion que debe tener la prox alimentacion agregada
@@ -271,6 +214,10 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
 
         # Cantidad maxima de salidas laterales igual a la cantidad de platos menos el tope y el fondo (2)
         self._salidas_laterales_maximas = self.simulacion.destilacion.numero_platos - 2
+
+        # Inicializando interfaz de usuario
+        self.build_ui()
+        self.show()
 
     def build_ui(self):
         """Construye la interfaz de usuario a partir de la clase generada por qtdesigner"""
@@ -446,9 +393,6 @@ class ConfiguracionDestilacion(QtWidgets.QWidget):
 
 
 class ConfiguracionCorrientes(QtWidgets.QWidget):
-
-    ui = None
-
     # Control de numeros de corriente para nombres
     numero_corriente = 1
 
@@ -456,9 +400,16 @@ class ConfiguracionCorrientes(QtWidgets.QWidget):
         super().__init__()
         self.simulacion = simulacion
 
+        # Variables de ui.
+        self.ui = None
+        self.modificador_composicion = None
 
+        # Inicializando interfaz de usuario
         self.build_ui()
         self.show()
+
+        # Logging
+        self.logger = logging.getLogger(__name__)
 
     def build_ui(self):
         """Construye la interfaz de usuario a partir de la clase generada por qtdesigner"""
@@ -475,12 +426,10 @@ class ConfiguracionCorrientes(QtWidgets.QWidget):
         # Cargando datos de simulación
         self._cargar_corrientes()
 
-
     def _cargar_corrientes(self):
         """Carga las corrientes de la simulacion a la lista de corrientes"""
         for corriente in self.simulacion.corrientes:
             self.ui.listaCorrientes.addItem(corriente.nombre)
-
 
     def _corriente_seleccionada(self):
         """Retorna la corriente seleccionada en la lista de corrientes"""
@@ -528,4 +477,69 @@ class ConfiguracionCorrientes(QtWidgets.QWidget):
         """Abre el modificador de corriente si hay alguna corriente seleccionada"""
         corriente = self._corriente_seleccionada()
         if corriente:
-            self.modifica_composicion = ModificaComposicion(corriente)
+            self.modificador_composicion = ModificaComposicion(corriente)
+
+
+class ModificaComposicion(QtWidgets.QWidget):
+    def __init__(self, corriente):
+        super().__init__()
+        self.corriente = corriente
+
+        # Ui
+        self.ui = None
+        self.build_ui()
+
+        self.show()
+
+    def build_ui(self):
+        """Construye la interfaz de usuario a partir de la clase generada por qtdesigner"""
+        self.ui = Ui_Composicion()
+        self.ui.setupUi(self)
+        self.ui.tablaComposicion.setRowCount(len(self.corriente.compuestos))
+
+        # Se actualiza la corriente para asegurarse que la lista de composicion
+        # sea igual a la de componentes. (Pueden haber componentes nuevos
+        self.corriente.actualizar()
+
+        print(self.corriente.compuestos, self.corriente.composicion)
+
+        for fila, (compuesto, fraccion) in enumerate(self.corriente):
+            item_compuesto = QtWidgets.QTableWidgetItem(compuesto)
+            item_compuesto.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tablaComposicion.setItem(fila, 0,
+                                             item_compuesto)
+            self.ui.tablaComposicion.setItem(fila, 1,
+                                             QtWidgets.QTableWidgetItem(str(fraccion)))
+
+            # Conectando señales
+            self.ui.aceptar.clicked.connect(self.aceptar)
+            self.ui.normalizar.clicked.connect(self.normalizar)
+
+    def _rango_tabla(self):
+        yield from range(len(self.corriente.compuestos))
+
+    def aceptar(self):
+        """Acepta la composicion introducida -- normalizandola en el proceso."""
+        self.normalizar()
+        for fila in self._rango_tabla():
+            fraccion = float(self.ui.tablaComposicion.item(fila, 1).text())
+            self.corriente.composicion[fila] = fraccion
+        self.close()
+
+    def normalizar(self):
+        """Normaliza la composicion introducida (La sumatoria de las fracciones igual a 1)"""
+        # Obteniendo la composicion
+        composicion = []
+        for fila in self._rango_tabla():
+            composicion.append(float(self.ui.tablaComposicion.item(fila, 1).text()))
+
+        # Verificando la suma
+        sum_composicion = sum(composicion)
+        if sum_composicion != 1:
+            for fila in self._rango_tabla():
+                # Se divide cada fraccion entre la sumatoria de ellas para normalizarla
+                fraccion = float(self.ui.tablaComposicion.item(fila, 1).text())
+                nueva_fraccion = str(round(fraccion / sum_composicion, 4))
+                self.ui.tablaComposicion.item(fila, 1).setText(nueva_fraccion)
+        else:
+            return
