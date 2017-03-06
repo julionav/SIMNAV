@@ -2,12 +2,14 @@
 
 import sys
 import logging
+from pathlib import Path
 
 from PyQt5 import QtWidgets
 
 from simnav import Simulacion
 from simnav.gui.vistas import VistaPrincipal
 
+carpeta_actual = Path(__file__).parent
 
 class Aplicacion(QtWidgets.QApplication):
     def __init__(self, sys_argv):
@@ -20,7 +22,7 @@ class Aplicacion(QtWidgets.QApplication):
         logger = logging.getLogger(__name__)
         logger.info('Inciando Aplicación')
 
-        self.simulacion = Simulacion()
+        self.simulacion = Simulacion(carpeta_actual / 'ejemplo.yaml')
         self.main_view = VistaPrincipal(self.simulacion)
         self.main_view.show()
 

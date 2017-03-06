@@ -1,0 +1,17 @@
+# Ejemplo de un archivo de simulación de simnav
+compuestos:
+    - Benzene
+    - Tolune
+
+corrientes:
+    - {nombre: corriente1, flujo: 100, temperatura: 375.15, composicion: [0.5, 0.5], presion: 101325}
+
+paquete propiedades: Ideal
+
+destilacion:
+    numero_platos: 10
+    presion: 101325
+    destilado: 50
+    condensador: Parcial
+    alimentaciones:
+        - {plato: 5, corriente: 0}
