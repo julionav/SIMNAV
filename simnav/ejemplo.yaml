@@ -4,7 +4,11 @@ compuestos:
     - Tolune
 
 corrientes:
-    - {nombre: corriente1, flujo: 100, temperatura: 375.15, composicion: [0.5, 0.5], presion: 101325}
+    - nombre: corriente1
+      flujo: 100
+      temperatura: 375.15
+      composicion: [0.5, 0.5]
+      presion: 101325}
 
 paquete propiedades: Ideal
 
@@ -14,4 +18,4 @@ destilacion:
     destilado: 50
     condensador: Parcial
     alimentaciones:
-        - {plato: 5, corriente: 0}
+        - {plato: 5, posicion_corriente: 0}

@@ -204,6 +204,8 @@ class ConfiguracionPropiedades(QtWidgets.QWidget):
 
 class ConfiguracionDestilacion(QtWidgets.QWidget):
     # TODO: Cambiar titulo de ventana
+    # TODO: Los platos se muestran con un numero mayor al verdadero. plato 5 ==> plato 6
+
 
     def __init__(self, simulacion):
         super().__init__()

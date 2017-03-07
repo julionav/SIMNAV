@@ -34,13 +34,31 @@ class Simulacion:
         with open(direccion_archivo_simulacion, 'r') as datos_yaml:
             datos = yaml.load(datos_yaml)
 
+        # Cargando compuestos
         self.compuestos = datos['compuestos']
 
-        for parametro, valor in datos['destilacion'].items():
-            setattr(self.destilacion, parametro, valor)
-
+        # Cargando corrientes
         for datos_corriente in datos['corrientes']:
             self.crear_corriente(**datos_corriente)
+
+        # Cargando datos de simulación
+        for parametro, valor in datos['destilacion'].items():
+            if parametro == 'alimentaciones':
+                # Las alimentaciones estan guardadas como [plato, posicion corriente]
+                alimentaciones = []
+                for alimentacion in valor:
+                    # Con la posicion de la corriente se obtiene la referencia a la corrietne
+                    corriente = self.corrientes[alimentacion['posicion_corriente']]
+                    alimentaciones.append([alimentacion['plato'], corriente])
+
+                self.destilacion.alimentaciones = alimentaciones
+
+            else:
+                setattr(self.destilacion, parametro, valor)
+
+        # Cargando paquete de propiedades
+        self.paquete_propiedades = datos['paquete propiedades']
+
 
     @property
     def paquete_propiedades(self):
