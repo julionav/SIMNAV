@@ -1,4 +1,5 @@
 """Modelos matematicos para operaciones unitarias de destilación"""
+import logging
 
 import numpy as np
 
@@ -14,7 +15,6 @@ class DestilacionSemiRigurosa:
     def __init__(self, numero_platos=10, destilado=50, reflujo=1.5, alimentaciones=[],
                  salidas_laterales=[], paquete_termodinamico=None, presion=101325):
         """
-
         :param numero_platos: numero de platos de la torre
         :param destilado: flujo de destilado de la torre (kmol/h)
         :param reflujo: relacion de reflujo de la torre
@@ -31,6 +31,9 @@ class DestilacionSemiRigurosa:
         self.presion = presion
         self.propiedades = paquete_termodinamico
         self.condensador = "Parcial"
+
+        # Logging
+        self.logger = logging.getLogger(__name__)
 
     def simular(self):
         """
@@ -58,7 +61,7 @@ class DestilacionSemiRigurosa:
         x = np.zeros((N, NC))  # Composicion de los componentes plato a plato
 
         # Se toman los parametros necesarios de las corrientes de entrada
-
+        self.logger.debug('Tomando los datos de las alimentaciones')
         for plato, corriente in self.alimentaciones:
             indice = plato - 1  # Los inidices de los array comienzan en 0. Los platos en 1
             F[indice] = corriente.flujo
@@ -80,9 +83,6 @@ class DestilacionSemiRigurosa:
 
         # Se inicializan arrays para las variables de espacio de estado del modelo
         A = np.zeros(N)
-        B = np.zeros(N)
-        C = np.zeros(N)
-        E = np.zeros(N)
         sum_materia = np.zeros(N)
 
         # Sumatoria de materia alimentada y extraida en cada etapa
@@ -96,7 +96,7 @@ class DestilacionSemiRigurosa:
         # Contadores de iteraciones
         contador_T = 0
         contador_V = 0
-
+        self.logger.debug('Iniciando Iteración de la destilación')
         # La iteración se realiza con 2 ciclos. El ciclo interior corrige la temperatura de los
         # y el exterior el flujo de vapor por los platos
         while errorV >= 0.0001:

@@ -5,7 +5,7 @@ from functools import wraps
 import numpy as np
 
 
-def soporte_scalar(func: object) -> object:
+def soporte_scalar(func):
     """Gives numpy support to a python function"""
 
     @wraps(func)
@@ -55,6 +55,7 @@ def soporte_numpy_2d(func):
             results[i] = func(
                 *[arg[i] if isinstance(arg, np.ndarray) else arg for arg in args],
                 **{key: value[i] for key, value in kwargs.items()})
+
         return results
 
     return wrapper

@@ -1,5 +1,6 @@
 """Paquetes termodinamicos"""
 
+import logging
 from functools import partial
 
 import numpy as np
@@ -45,10 +46,14 @@ class PaqueteIdeal:
         self.numero_compuestos = 0
         self.temperaturas_ref = None  # Array de temperaturas de referencia
 
+        # Logging
+        self.logger = logging.getLogger(__name__)
+
     def preparar(self):
         """Metodo a ser llamado antes de iniciar la simulacion"""
-
+        self.logger.debug("Preparando paquete termodinamico")
         self.numero_compuestos = len(self.compuestos)
+        self.parametros = GestorParametros(self.compuestos)
 
         # Temperatura de referencia (h=0, s=0 para liquido saturado a 1atm)
         self.temperaturas_ref = np.array(self.temperatura_saturacion(101325))
@@ -69,6 +74,7 @@ class PaqueteIdeal:
                                                        parametros.C3,
                                                        parametros.C4,
                                                        parametros.C5)
+        print('vapor', presiones_vapor)
         return presiones_vapor
 
     def temperatura_saturacion(self, presion_saturacion):
@@ -271,12 +277,13 @@ class PaqueteIdeal:
             # de la temperatura de saturacion pura de cada componente
             temperatura_inicial = np.sum(composicion_liquido * self.temperaturas_ref)
 
-        def sumatoria_fraccion_vapor(temperatura, composicion_liquido, presion):
+        def sumatoria_fraccion_vapor(temperatura, _composicion_liquido, _presion):
             """Determinacion de la sumatoria de las fracciones de vapor (y). Siguiendo la ecuacion
             ideal"""
-            fracciones_vapor = self.fraccion_vapor(composicion_liquido, temperatura, presion)
+            fracciones_vapor = self.fraccion_vapor(_composicion_liquido, temperatura, _presion)
             return 1 - np.sum(fracciones_vapor)
-
+        self.logger.debug('Calculo temperatura burbuja', composicion_liquido, presion,
+                          temperatura_inicial)
         return newton(sumatoria_fraccion_vapor, temperatura_inicial,
                       args=(composicion_liquido, presion))
 

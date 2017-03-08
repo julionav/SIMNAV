@@ -35,7 +35,8 @@ class Simulacion:
             datos = yaml.load(datos_yaml)
 
         # Cargando compuestos
-        self.compuestos = datos['compuestos']
+        for compuesto in datos['compuestos']:
+            self.compuestos.append(compuesto)
 
         # Cargando corrientes
         for datos_corriente in datos['corrientes']:
