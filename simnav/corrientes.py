@@ -2,6 +2,8 @@
 
 import logging
 
+import numpy as np
+
 class CorrienteMateria:
     """
     Corriente de flujo masico.
@@ -24,6 +26,8 @@ class CorrienteMateria:
         self.presion = presion or 101325
 
         self.compuestos = compuestos
+        self.composicion = np.array(composicion) if composicion else np.zeros(len(compuestos))
+
         self.nombre = nombre
         self.paquete_termodinamico = paquete_termodinamico
         self._entalpia = None
@@ -31,8 +35,6 @@ class CorrienteMateria:
         # Compuestos conocidos por la corriente (pueden cambiar)
         self.compuestos_conocidos = list(compuestos)
 
-        # Composicion de uso interno
-        self.composicion = composicion or [0 for _ in range(len(self.compuestos))]
 
         # Logging
         self.logger = logging.getLogger(__name__)
@@ -46,7 +48,7 @@ class CorrienteMateria:
         if self.compuestos != self.compuestos_conocidos:
             # Se resetea la composicion si los compuestos han cambiado
             self.logger.debug(f'Reseteando composicion de corriente {self.nombre}')
-            self.composicion = [0 for _ in range(len(self.compuestos))]
+            self.composicion = np.zeros(len(self.compuestos))
             self.compuestos_conocidos = list(self.compuestos)
 
     @property
@@ -64,6 +66,7 @@ class CorrienteMateria:
     @property
     def entalpia_especifica(self):
         """Retorna la entalpia especifica de la corriente"""
+        print(self.composicion, self.temperatura, self.presion)
         return self.paquete_termodinamico.entalpia(self.composicion,
                                                    self.temperatura,
                                                    self.presion)

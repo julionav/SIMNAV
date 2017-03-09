@@ -74,7 +74,6 @@ class PaqueteIdeal:
                                                        parametros.C3,
                                                        parametros.C4,
                                                        parametros.C5)
-        print('vapor', presiones_vapor)
         return presiones_vapor
 
     def temperatura_saturacion(self, presion_saturacion):
@@ -282,8 +281,7 @@ class PaqueteIdeal:
             ideal"""
             fracciones_vapor = self.fraccion_vapor(_composicion_liquido, temperatura, _presion)
             return 1 - np.sum(fracciones_vapor)
-        self.logger.debug('Calculo temperatura burbuja', composicion_liquido, presion,
-                          temperatura_inicial)
+
         return newton(sumatoria_fraccion_vapor, temperatura_inicial,
                       args=(composicion_liquido, presion))
 
@@ -383,9 +381,11 @@ class PaqueteIdeal:
         numero: 0 para liquido, 1 para vapor, 2 para mezcla liquido-vapor. Si como_numero es
         false retorna una palabra que identifica el estado
         """
+        print('estado', composicion, temperatura, presion)
         temperatura_burbuja = self.temperatura_burbuja(composicion_liquido=composicion,
                                                        presion=presion,
                                                        temperatura_inicial=temperatura)
+
         temperatura_rocio = self.temperatura_rocio(composicion_vapor=composicion,
                                                    presion=presion,
                                                    temperatura_inicial=temperatura)

@@ -86,6 +86,8 @@ class Simulacion:
 
     def simular(self):
         """Corre la simulación de la columna de destilacion"""
+        for corriente in self.corrientes:
+            corriente.actualizar()
+
         self.paquete_propiedades.preparar()
         resultados = self.destilacion.simular()
-        print(resultados)
