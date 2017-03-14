@@ -169,12 +169,14 @@ class DestilacionSemiRigurosa:
             # Criterio de error en el flujo de vapor
 
             if condensador_parcial:
-                V[2:] = V_nuevo[2:]
                 errorV = np.sum((V_nuevo[2:] - V[2:]) ** 2)
-            else:
-                V[1:] = V_nuevo[1:]
-                errorV = np.sum((V_nuevo[1:] - V[1:]) ** 2)
+                V[2:] = V_nuevo[2:]
 
+            else:
+                errorV = np.sum((V_nuevo[1:] - V[1:]) ** 2)
+                V[1:] = V_nuevo[1:]
+
+            print(errorV)
             # Reseteando el error en la temperatura
             errorT = 100
             contador_V += 1
@@ -182,4 +184,11 @@ class DestilacionSemiRigurosa:
             if contador_V >= 100:
                 raise RuntimeError('Contador de ciclo de vapor over 200')
 
-        return V, T, L, x, y
+        return {
+            'vapor': V,
+            'liquido': L,
+            'temperatura': T,
+            'fraccion_liquido': x,
+            'fraccion_vapor': y,
+            'contador_ciclo_vapor': contador_V,
+        }

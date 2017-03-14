@@ -2,6 +2,7 @@
 import logging
 
 import yaml
+import csv
 
 from simnav.corrientes import CorrienteMateria
 from simnav.termodinamica import GestorPaquetes
@@ -18,6 +19,7 @@ class Simulacion:
 
         self.compuestos = []
         self.corrientes = []
+        self.resultados = None
         self._paquete_propiedades = GestorPaquetes(self.compuestos)
         self.destilacion = DestilacionSemiRigurosa(
             paquete_termodinamico=self.paquete_propiedades)
@@ -60,7 +62,6 @@ class Simulacion:
         # Cargando paquete de propiedades
         self.paquete_propiedades = datos['paquete propiedades']
 
-
     @property
     def paquete_propiedades(self):
         return self._paquete_propiedades
@@ -90,4 +91,36 @@ class Simulacion:
             corriente.actualizar()
 
         self.paquete_propiedades.preparar()
-        resultados = self.destilacion.simular()
+        self.resultados = self.destilacion.simular()
+        self.exportar()
+
+    def exportar(self):
+        """Exporta los resultados de la simulación"""
+        with open('resultados.csv', 'w') as f:
+            encabezado = ['Flujo de vapor', 'Flujo de liquido', 'Temperatura']
+
+            # Luego de los flujos de vapor y liquido es mostrada la composicion de la fase
+            # liquida seguida por la de la fase vapor
+            seccion_composicion_liquido = [f'x - {compuesto}' for compuesto in self.compuestos]
+            seccion_composicion_vapor = [f'y - {compuesto}' for compuesto in self.compuestos]
+
+            encabezado.extend(seccion_composicion_liquido)
+            encabezado.extend(seccion_composicion_vapor)
+
+            escribidor = csv.DictWriter(f, encabezado)
+            escribidor.writeheader()
+
+            r = self.resultados
+            filas = zip(r['vapor'], r['liquido'], r['fraccion_liquido'],
+                        r['fraccion_vapor'], r['temperatura'])
+
+            for V, L, x, y, T in filas:
+                composicion_liquido = {f'x - {compuesto}': fraccion for compuesto, fraccion in
+                                       zip(self.compuestos, x)}
+                composicion_vapor = {f'y - {compuesto}': fraccion for compuesto, fraccion in
+                                     zip(self.compuestos, y)}
+
+                fila = {'Flujo de vapor': V, 'Temperatura': T, 'Flujo de liquido': L,
+                        **composicion_liquido, **composicion_vapor,}
+
+                escribidor.writerow(fila)
