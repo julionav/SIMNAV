@@ -242,6 +242,7 @@ class PaqueteIdeal:
         datos = zip(temperaturas_criticas,
                     self.parametros.calor_vaporizacion(),
                     self.temperaturas_ref)
+
         for temperatura_critica, parametros, temperatura_referencia in datos:
             entalpias.append(ideal.calor_vaporizacion(T=temperatura_referencia,
                                                       Tc=temperatura_critica,
@@ -301,8 +302,8 @@ class PaqueteIdeal:
             temperatura_inicial = np.sum(composicion_vapor * self.temperaturas_ref)
 
         # TODO: Derivar esto.
-        def sumatoria_fraccion_liquido(temperatura, composicion_vapor, presion):
-            fracciones_liquido = self.fraccion_liquido(composicion_vapor, temperatura, presion)
+        def sumatoria_fraccion_liquido(temperatura, _composicion_vapor, _presion):
+            fracciones_liquido = self.fraccion_liquido(_composicion_vapor, temperatura, _presion)
             return 1 - np.sum(fracciones_liquido)
 
         return newton(sumatoria_fraccion_liquido, temperatura_inicial,
@@ -339,27 +340,35 @@ class PaqueteIdeal:
 
         # Identificacion de estado:
         estado = self.estado(composicion, temperatura, presion, como_numero=True)
+
         if estado == 0:
             # Vapor
             return self.entalpia_liquido(composicion, temperatura)
+
         elif estado == 1:
             # Liquido
             return self.entalpia_vapor(composicion, temperatura)
+
         else:
             # Liquido-Vapor
             if calidad_vapor is None:
                 calidad_vapor = self.calidad_vapor(composicion, temperatura, presion)
+
             composicion_liquido = self.composicion_fase_liquida(composicion,
                                                                 temperatura,
                                                                 presion,
                                                                 calidad_vapor)
+
             composicion_vapor = self.fraccion_vapor(composicion_liquido,
                                                     temperatura,
                                                     presion)
+
             entalpia_liquido = self.entalpia_liquido(composicion_liquido,
                                                      temperatura)
+
             entalpia_vapor = self.entalpia_vapor(composicion_vapor,
                                                  temperatura)
+
             return entalpia_vapor * calidad_vapor + entalpia_liquido * (1 - calidad_vapor)
 
     def composicion_fase_liquida(self, composicion, temperatura, presion, calidad_vapor):

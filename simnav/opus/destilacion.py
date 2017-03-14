@@ -49,6 +49,7 @@ class DestilacionSemiRigurosa:
         # Presion de cada plato. Considerando que no hay caida de presion.
         # TODO: Considerar caida de presion
         P = np.array([self.presion] * N)
+
         # Se inicializan los array que contendran las variables de calculo plato plato
         Q = np.zeros(N)  # Flujo de calor
         SL = np.zeros(N)  # Retiro de liquido  #TODO: Esto debe llenarse con corrientes salida
@@ -145,6 +146,8 @@ class DestilacionSemiRigurosa:
 
             # Calculo de flujo de liquido en la torre
             L = np.append(V, 0)[1:] + sum_materia - D
+            print("L", L)
+            print("V", V)
 
             # Calculo de entalpias de la alimentacion y plato a plato
             hV = self.propiedades.entalpia_vapor(composicion=y,
@@ -152,10 +155,11 @@ class DestilacionSemiRigurosa:
             hL = self.propiedades.entalpia_liquido(composicion=x,
                                                    temperatura=T)
             # Calculo de calor en condensador y rehervidor
-            Q[0] = -(D * ((R + 1) * hV[1] - hV[0] - R * hL[0]))  # Calor condensador
+            Q[0] = -(D * hV[0] - L[0] * hL[0] + V[1] * hV[1])  # Calor condensador
+
             # Calor rehervidor
-            Q[-1] = -Q[1] + D * hV[0] + L[-1] * hL[-1] - np.sum(F * hL - SV * hV - SL * hL,
-                                                                   axis=0)
+            Q[-1] = -Q[0] + D * hV[0] + L[-1] * hL[-1] - np.sum(F * hF - SV * hV - SL * hL)
+
             # Calculo del flujo de vapor en la torre
             for n in range(N - 1, 0, -1):
                 if n == N - 1:
@@ -163,11 +167,9 @@ class DestilacionSemiRigurosa:
                                    + Q[n]) / hV[n] - SV[n])
                 else:
                     V_nuevo[n] = ((L[n - 1] * hL[n - 1] - (L[n] + SL[n]) * hL[n] +
-                                   V[n + 1] * hV[
-                                       n + 1] + F[n] * hF[n]
-                                   + Q[n]) / hV[n] - SV[n])
-            # Criterio de error en el flujo de vapor
+                                   V[n + 1] * hV[n + 1] + F[n] * hF[n] + Q[n]) / hV[n] - SV[n])
 
+            # Criterio de error en el flujo de vapor
             if condensador_parcial:
                 errorV = np.sum((V_nuevo[2:] - V[2:]) ** 2)
                 V[2:] = V_nuevo[2:]
