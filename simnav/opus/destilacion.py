@@ -65,6 +65,7 @@ class DestilacionSemiRigurosa:
         self.logger.debug('Tomando los datos de las alimentaciones')
         for plato, corriente in self.alimentaciones:
             indice = plato - 1  # Los inidices de los array comienzan en 0. Los platos en 1
+            print(corriente.estado)
             F[indice] = corriente.flujo
             hF[indice] = corriente.entalpia_especifica
             zF[indice] = corriente.composicion
@@ -73,7 +74,6 @@ class DestilacionSemiRigurosa:
         if condensador_parcial:
             V[0] = D  # El flujo de vapor de salida por el tope (etapa 0) es igual al destilado
             V[1] = D * (R + 1)  # Flujo de vapor
-            print(V[1])
             V[2:] = V[1]  # Se toma como valores iniciales para el flujo de vapor V1
         else:
             V[0] = D * (R + 1)
@@ -146,8 +146,6 @@ class DestilacionSemiRigurosa:
 
             # Calculo de flujo de liquido en la torre
             L = np.append(V, 0)[1:] + sum_materia - D
-            print("L", L)
-            print("V", V)
 
             # Calculo de entalpias de la alimentacion y plato a plato
             hV = self.propiedades.entalpia_vapor(composicion=y,
@@ -155,10 +153,12 @@ class DestilacionSemiRigurosa:
             hL = self.propiedades.entalpia_liquido(composicion=x,
                                                    temperatura=T)
             # Calculo de calor en condensador y rehervidor
-            Q[0] = -(D * hV[0] - L[0] * hL[0] + V[1] * hV[1])  # Calor condensador
+            Q[0] = (-D * hV[0] - L[0] * hL[0] + V[1] * hV[1])  # Calor condensador
 
             # Calor rehervidor
-            Q[-1] = -Q[0] + D * hV[0] + L[-1] * hL[-1] - np.sum(F * hF - SV * hV - SL * hL)
+            Q[-1] = Q[0] + D * hV[0] + L[-1] * hL[-1] - np.sum(F * hF - SV * hV - SL * hL)
+
+            print(Q[0], Q[-1])
 
             # Calculo del flujo de vapor en la torre
             for n in range(N - 1, 0, -1):
@@ -178,7 +178,6 @@ class DestilacionSemiRigurosa:
                 errorV = np.sum((V_nuevo[1:] - V[1:]) ** 2)
                 V[1:] = V_nuevo[1:]
 
-            print(errorV)
             # Reseteando el error en la temperatura
             errorT = 100
             contador_V += 1
